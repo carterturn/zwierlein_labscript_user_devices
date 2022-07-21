@@ -359,7 +359,7 @@ class Rigol4162Worker(Worker):
         for channel in [1, 2]:
             state = self.rigol.get_state(channel)
             if state == 'OFF':
-                remote_values['channel_{:d}'.format(channel)] = {'state': 'off'}
+                remote_values['channel {:d}'.format(channel)] = {'state': 'off'}
                 continue
 
             mode = self.rigol.get_mode(channel)
@@ -368,7 +368,7 @@ class Rigol4162Worker(Worker):
                 cv = {'state': 'on', 'mode': 'static',
                       'freq': self.rigol.get_static_freq(channel),
                       'amplitude': self.rigol.get_static_amplitude(channel),}
-                remote_values['channel_{:d}'.format(channel)] = cv
+                remote_values['channel {:d}'.format(channel)] = cv
             elif mode == 'sweep':
                 cv = {'state': 'on', 'mode': 'sweep',
                       'freq_start': self.rigol.get_sweep_freq_start(channel),
@@ -383,15 +383,19 @@ class Rigol4162Worker(Worker):
                       'trigger_slope': self.rigol.get_sweep_trigger_slope(channel),
                       'trigger_source': self.rigol.get_sweep_trigger_source(channel),
                       'trigger_out': self.rigol.get_sweep_trigger_out(channel)}
-                remote_values['channel_{:d}'.format(channel)] = cv
+                remote_values['channel {:d}'.format(channel)] = cv
             else:
-                remote_values['channel_{:d}'.format(channel)] = {'state': 'off'}
+                remote_values['channel {:d}'.format(channel)] = {'state': 'off'}
 
         return remote_values
 
     def program_manual(self, values):
         for channel in [1, 2]:
-            setting = values['channel_{:d}'.format(channel)]
+            key = 'channel {:d}'.format(channel)
+            if key in values.keys():
+                if values[key] is None:
+                    values[key] = {'state': 'off'}
+            setting = values[key]
 
             if setting['state'] == 'off':
                 self.rigol.output_off(channel)
@@ -437,14 +441,14 @@ class Rigol4162Worker(Worker):
         with h5py.File(h5file, 'r') as hdf5_file:
             group = hdf5_file['/devices/' + device_name]
             values = {}
-            if 'channel_1' in group:
-                values['channel_1'] = _parse_channel_dataset(group['channel_1'])
+            if 'channel 1' in group:
+                values['channel 1'] = _parse_channel_dataset(group['channel 1'])
             else:
-                values['channel_1'] = {'state': 'off'}
-            if 'channel_2' in group:
-                values['channel_2'] = _parse_channel_dataset(group['channel_2'])
+                values['channel 1'] = {'state': 'off'}
+            if 'channel 2' in group:
+                values['channel 2'] = _parse_channel_dataset(group['channel 2'])
             else:
-                values['channel_2'] = {'state': 'off'}
+                values['channel 2'] = {'state': 'off'}
         return self.program_manual(values)
 
     def transition_to_manual(self):

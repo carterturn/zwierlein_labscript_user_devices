@@ -1,4 +1,5 @@
 from labscript import Device, LabscriptError, set_passed_properties
+from enums import *
 
 class RigolDG4162Static(Device):
     def __init__(self, name, parent_device, **kwargs):
@@ -24,11 +25,11 @@ class RigolDG4162Sweep(Device):
         self.time_hold_start = StaticAnalogQuantity(self.name+'_time_hold_start', self, 'time_hold_start')
         self.time_hold_stop = StaticAnalogQuantity(self.name+'_time_hold_stop', self, 'time_hold_stop')
         self.time_return = StaticAnalogQuantity(self.name+'_time_return', self, 'time_return')
-        self.spacing = StaticStrQuantity(self.name+'_spacing', self, 'spacing', values=['LIN', 'LOG', 'STE'])
+        self.spacing = StaticEnumQuantity(self.name+'_spacing', self, 'spacing', RigolDG4162EnumSpacing)
         self.steps = StaticAnalogQuantity(self.name+'_steps', self, 'steps')
-        self.trigger_slope = StaticStrQuantity(self.name+'_trigger_slope', self, 'trigger_slope', values=['POS', 'NEG'])
-        self.trigger_source = StaticStrQuantity(self.name+'_trigger_source', self, 'trigger_source', values=['EXT', 'INT', 'MAN'])
-        self.trigger_out = StaticStrQuantity(self.name+'_trigger_out', self, 'trigger_out', values=['OFF', 'POS', 'NEG'])
+        self.trigger_slope = StaticEnumQuantity(self.name+'_trigger_slope', self, 'trigger_slope', RigolDG4162EnumTriggerSlope)
+        self.trigger_source = StaticEnumQuantity(self.name+'_trigger_source', self, 'trigger_source', RigolDG4162EnumTriggerSource)
+        self.trigger_out = StaticEnumQuantity(self.name+'_trigger_out', self, 'trigger_out', RigolDG4162EnumTriggerSource)
 
         self.parent_device.add(self)
 
@@ -38,16 +39,15 @@ class RigolDG4162(IntermediateDevice):
           termination: character signalling end of response
           resource_str: IP address or USBTMC name
           access_mode: 'eth' or 'usb'
-
-          device_properties (set per shot)
-          timeout: in seconds for response to queries over visa interface
+          frequency_limits: minimum and maximum output frequency
+          amplitude_limits: minimum and maximum output amplitude
     """
     description = 'Rigol DG4162 arbitrary waveform generator'
 
     @set_passed_properties(
         property_names = {
-            'connection_table_properties': ['termination', 'resource_str', 'access_mode'],
-            'device_properties': ['timeout']}
+            'connection_table_properties': ['termination', 'resource_str', 'access_mode',
+                                            'frequency_limits', 'amplitude_limits'],
         )
     def __init__(self, name, addr, 
                  termination='\n', resource_str=None, access_mode=None,
@@ -55,9 +55,12 @@ class RigolDG4162(IntermediateDevice):
                  **kwargs):
         Device.__init__(self, name, None, **kwargs)
         self.name = name
+        assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"
         self.BLACS_connection = access_mode + ',' + resource_str
         self.termination = termination
-        assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"
+
+        self.frequency_limits = frequency_limits
+        self.amplitude_limits = amplitude_limits
 
     def generate_code(self, hdf5_file):
         # group = self.init_device_name(hdf5_file)
