@@ -168,7 +168,7 @@ class StaticEnumQuantity(Output):
         		or the value is not in the list of allowed values.
         """
         if self._static_value == None:
-            if value not isinstance(enum_class):
+            if not (value isinstance(enum_class)):
                 raise LabscriptError('You cannot program the value %s to %s as it is not a valid value'%(str(value), self.name))
             self._static_value = value
         else:

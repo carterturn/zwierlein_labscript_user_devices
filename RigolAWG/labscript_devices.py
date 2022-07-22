@@ -2,7 +2,7 @@ from labscript import Device, LabscriptError, set_passed_properties
 from enums import *
 
 class RigolDG4162Static(Device):
-    def __init__(self, name, parent_device, **kwargs):
+    def __init__(self, name, parent_device, connection, **kwargs):
         Device.__init__(self, name, parent_device, connection,
                         call_parents_add_device=false, **kwargs)
 
@@ -14,7 +14,7 @@ class RigolDG4162Static(Device):
         return
 
 class RigolDG4162Sweep(Device):
-    def __init__(self, name, parent_device):
+    def __init__(self, name, parent_device, connection, **kwargs):
         Device.__init__(self, name, parent_device, connection,
                         call_parents_add_device=false, **kwargs)
 
@@ -32,6 +32,8 @@ class RigolDG4162Sweep(Device):
         self.trigger_out = StaticEnumQuantity(self.name+'_trigger_out', self, 'trigger_out', RigolDG4162EnumTriggerSource)
 
         self.parent_device.add(self)
+
+        return
 
 class RigolDG4162(IntermediateDevice):
     """A labscript_device for the Rigol DG4162 arbitrary waveform generator
@@ -65,4 +67,4 @@ class RigolDG4162(IntermediateDevice):
         IntermediateDevice.generate_code(self, hdf5_file)
         group = self.init_device_group(hdf5_file)
         for channel in self.child_devices:
-            
+            print(channel.connection)
