@@ -49,10 +49,8 @@ class RigolDG4162(IntermediateDevice):
             'connection_table_properties': ['termination', 'resource_str', 'access_mode',
                                             'frequency_limits', 'amplitude_limits'],
         )
-    def __init__(self, name, addr, 
-                 termination='\n', resource_str=None, access_mode=None,
-                 timeout=5,
-                 **kwargs):
+    def __init__(self, name, termination='\n', resource_str=None, access_mode=None,
+                 timeout=5, **kwargs):
         Device.__init__(self, name, None, **kwargs)
         self.name = name
         assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"

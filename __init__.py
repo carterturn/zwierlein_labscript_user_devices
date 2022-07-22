@@ -69,7 +69,7 @@ class EO(object):
         return widget
 
     def add_widget(self, widget):
-        if widget in self._widgets
+        if widget in self._widgets:
             return False
 
         self._widgets.append(widget)
