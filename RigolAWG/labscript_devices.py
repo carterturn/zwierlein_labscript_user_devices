@@ -1,22 +1,22 @@
-from labscript import Device, LabscriptError, set_passed_properties
-from enums import *
+from labscript import Device, IntermediateDevice, LabscriptError, set_passed_properties, StaticAnalogQuantity
+from enum import *
+
+from user_devices import StaticEnumQuantity
 
 class RigolDG4162Static(Device):
     def __init__(self, name, parent_device, connection, **kwargs):
-        Device.__init__(self, name, parent_device, connection,
-                        call_parents_add_device=false, **kwargs)
+        Device.__init__(self, name, parent_device, connection, **kwargs)
 
         self.freq = StaticAnalogQuantity(self.name+'_freq', self, 'freq')
         self.amplitude = StaticAnalogQuantity(self.name+'_amplitude', self, 'amplitude')
 
-        self.parent_device.add(self)
+        self.parent_device.add_device(self)
 
         return
 
 class RigolDG4162Sweep(Device):
     def __init__(self, name, parent_device, connection, **kwargs):
-        Device.__init__(self, name, parent_device, connection,
-                        call_parents_add_device=false, **kwargs)
+        Device.__init__(self, name, parent_device, connection, **kwargs)
 
         self.freq_start = StaticAnalogQuantity(self.name+'_freq_start', self, 'freq_start')
         self.freq_stop = StaticAnalogQuantity(self.name+'_freq_stop', self, 'freq_stop')
@@ -31,7 +31,7 @@ class RigolDG4162Sweep(Device):
         self.trigger_source = StaticEnumQuantity(self.name+'_trigger_source', self, 'trigger_source', RigolDG4162EnumTriggerSource)
         self.trigger_out = StaticEnumQuantity(self.name+'_trigger_out', self, 'trigger_out', RigolDG4162EnumTriggerSource)
 
-        self.parent_device.add(self)
+        self.parent_device.add_device(self)
 
         return
 
@@ -50,10 +50,11 @@ class RigolDG4162(IntermediateDevice):
         property_names = {
             'connection_table_properties': ['termination', 'resource_str', 'access_mode',
                                             'frequency_limits', 'amplitude_limits'],
-        )
+        }
+    )
     def __init__(self, name, termination='\n', resource_str=None, access_mode=None,
-                 timeout=5, **kwargs):
-        Device.__init__(self, name, None, **kwargs)
+                 frequency_limits=None, amplitude_limits=None, timeout=5, **kwargs):
+        Device.__init__(self, name, None, None, **kwargs)
         self.name = name
         assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"
         self.BLACS_connection = access_mode + ',' + resource_str

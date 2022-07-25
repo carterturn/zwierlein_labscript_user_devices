@@ -9,7 +9,9 @@ from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
 from qtutils.qt.QtWidgets import *
 
-from labscript import Device
+from labscript import Device, Output, set_passed_properties
+from labscript_utils.qtwidgets.enumoutput import EnumOutput
+from labscript_utils.unitconversions import UnitConversion
 import labscript_devices
 
 class EO(object):
@@ -20,7 +22,7 @@ class EO(object):
 
         self._locked = False
         self._comboboxmodel = QStandardItemModel()
-        self._widgets = []
+        self._widget_list = []
         self._program_device = program_function
 
         self._current_value = None
@@ -61,7 +63,7 @@ class EO(object):
 
         model = QStandardItemModel()
         for name in self._enum_class._member_names_:
-            item = QstandardItem(name)
+            item = QStandardItem(name)
             item.setData(item, Qt.UserRole)
             model.appendRow(item)
         widget.set_combobox_model(model)
@@ -69,10 +71,10 @@ class EO(object):
         return widget
 
     def add_widget(self, widget):
-        if widget in self._widgets:
+        if widget in self._widget_list:
             return False
 
-        self._widgets.append(widget)
+        self._widget_list.append(widget)
 
         widget.set_EO(self, True, False)
 
@@ -83,10 +85,10 @@ class EO(object):
         return True
 
     def remove_widget(self, widget, call_set_EO = True, new_EO = None):
-        if widget not in self._widgets:
+        if widget not in self._widget_list:
             # TODO: Make this error better!
             raise RuntimeError('The widget specified was not part of the EO object')
-        self._widgets.remove(widget)
+        self._widget_list.remove(widget)
 
         if call_set_EO:
             widget.set_EO(new_EO, True, True)
@@ -103,7 +105,7 @@ class EO(object):
     def unlock(self):
         self._update_lock(False)
 
-    def _update_lock(self,locked):
+    def _update_lock(self, locked):
         self._locked = locked
         for widget in self._widget_list:
             if locked:
@@ -114,11 +116,7 @@ class EO(object):
         # update the settings dictionary if it exists, to maintain continuity on tab restarts
         self._settings['locked'] = locked
 
-    def set_value(self,state,program=True):
-        # conversion to integer, then bool means we can safely pass in
-        # either a string '1' or '0', True or False or 1 or 0
-        state = bool(int(state))
-
+    def set_value(self, state, program=True):
         # We are programatically setting the state, so break the check lock function logic
         self._current_state = state
 
@@ -130,10 +128,10 @@ class EO(object):
             self._program_device()
 
         for widget in self._widget_list:
-            if state != widget.state:
-                widget.blockSignals(True)
-                widget.state = state
-                widget.blockSignals(False)
+            if state != widget.selected_option:
+                widget.block_combobox_signals()
+                widget.selected_option = state
+                widget.unblock_combobox_signals()
 
     @property
     def name(self):
@@ -168,7 +166,7 @@ class StaticEnumQuantity(Output):
         		or the value is not in the list of allowed values.
         """
         if self._static_value == None:
-            if not (value isinstance(enum_class)):
+            if not isinstance(value, enum_class):
                 raise LabscriptError('You cannot program the value %s to %s as it is not a valid value'%(str(value), self.name))
             self._static_value = value
         else:
@@ -202,3 +200,9 @@ class StaticEnumQuantity(Output):
                 sys.stderr.write(' '.join(['WARNING:', self.name, 'has no value set. It will be set to %s.\n'%self.instruction_to_string(self.default_value)]))
             self._static_value = self.default_value
         return self._static_value
+
+class integer_unit(UnitConversion):
+    base_unit = '#'
+
+    def __init__(self):
+        UnitConversion.__init__(self, None)

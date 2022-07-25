@@ -1,7 +1,10 @@
 from blacs.device_base_class import DeviceTab
-from blacs.output_classes import AO
-from labscript_utils.qtwidgets import EnumOutput, AnalogOutput
-from enums import *
+from blacs.output_classes import AO, DO
+from labscript_utils.qtwidgets.enumoutput import EnumOutput
+from labscript_utils.qtwidgets.analogoutput import AnalogOutput
+
+from user_devices import EO
+from user_devices.RigolAWG.enums import *
 
 class Rigol4162Tab(DeviceTab):
     def initialise_GUI(self):
@@ -24,16 +27,46 @@ class Rigol4162Tab(DeviceTab):
             outputs['amplitude'] = AO('amplitude', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'dBm', -30, 30, 1, 2)
+            outputs['freq_start'] = AO('freq_start', device.name, self.device_name,
+                                       self.program_device, self.settings,
+                                       None, None, 'Hz', 0, 1e10, 1e3, 5)
+            outputs['freq_stop'] = AO('freq_stop', device.name, self.device_name,
+                                      self.program_device, self.settings,
+                                      None, None, 'Hz', 0, 1e10, 1e3, 5)
+            outputs['time'] = AO('time', device.name, self.device_name,
+                                 self.program_device, self.settings,
+                                 None, None, 's', 0, 30, 0.01, 3)
+            outputs['time_hold_start'] = AO('time_hold_start', device.name, self.device_name,
+                                            self.program_device, self.settings,
+                                            None, None, 's', 0, 30, 0.01, 3)
+            outputs['time_hold_stop'] = AO('time_hold_stop', device.name, self.device_name,
+                                           self.program_device, self.settings,
+                                           None, None, 's', 0, 30, 0.01, 3)
+            outputs['time_return'] = AO('time_return', device.name, self.device_name,
+                                        self.program_device, self.settings,
+                                        None, None, 's', 0, 30, 0.01, 3)
+            outputs['spacing'] = EO('spacing', device.name, self.device_name,
+                                    self.program_device, self.settings,
+                                    RigolDG4162EnumSpacing)
+            outputs['steps'] = AO('steps', device.name, self.device_name,
+                                  self.program_device, self.settings,
+                                  None, None, '#', 0, 100, 1, 0)
+            outputs['trigger_slope'] = EO('trigger_slope', device.name, self.device_name,
+                                          self.program_device, self.settings,
+                                          RigolDG4162EnumTriggerSlope)
+            outputs['trigger_source'] = EO('trigger_source', device.name, self.device_name,
+                                           self.program_device, self.settings,
+                                           RigolDG4162EnumTriggerSource)
+            outputs['trigger_out'] = EO('trigger_out', device.name, self.device_name,
+                                        self.program_device, self.settings,
+                                        RigolDG4162EnumTriggerOut)
 
             widgets = {}
-            widgets['state'] = outputs['state'].create_widget()
-            widgets['mode'] = outputs['mode'].create_widget()
-            widgets['freq'] = outputs['freq'].create_widget()
-            widgets['amplitude'] = outputs['amplitude'].create_widget()
-
+            for name, output in outputs.items():
+                widgets[name] = output.create_widget()
             self.auto_place_widgets(('Channel {}'.format(channel), widgets))
 
-            self._output_sets.append({'channel {}'.format(channel): outputs})
+            self._output_sets['channel {}'.format(channel)] = outputs
 
         return
 
@@ -54,5 +87,5 @@ class Rigol4162Tab(DeviceTab):
         fpv = {}
         for channel in [1, 2]:
             chan_str = 'channel {}'.format(channel)
-            fpv[chan_str] = {name:item.value for name,item in self._output_sets[chan_str]}
+            fpv[chan_str] = {name:item.value for name,item in self._output_sets[chan_str].items()}
         return fpv
