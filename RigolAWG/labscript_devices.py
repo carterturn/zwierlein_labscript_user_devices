@@ -4,8 +4,8 @@ from enum import *
 from user_devices import StaticEnumQuantity
 
 class RigolDG4162Static(IntermediateDevice):
-    def __init__(self, name, parent_device, connection, **kwargs):
-        IntermediateDevice.__init__(self, name, parent_device, connection, **kwargs)
+    def __init__(self, name, parent_device, **kwargs):
+        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
 
         self.freq = StaticAnalogQuantity(self.name+'_freq', self, 'freq')
         self.amplitude = StaticAnalogQuantity(self.name+'_amplitude', self, 'amplitude')
@@ -15,8 +15,8 @@ class RigolDG4162Static(IntermediateDevice):
         return
 
 class RigolDG4162Sweep(IntermediateDevice):
-    def __init__(self, name, parent_device, connection, **kwargs):
-        IntermediateDevice.__init__(self, name, parent_device, connection, **kwargs)
+    def __init__(self, name, parent_device, **kwargs):
+        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
 
         self.freq_start = StaticAnalogQuantity(self.name+'_freq_start', self, 'freq_start')
         self.freq_stop = StaticAnalogQuantity(self.name+'_freq_stop', self, 'freq_stop')
