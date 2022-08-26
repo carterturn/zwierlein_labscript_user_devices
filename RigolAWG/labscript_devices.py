@@ -3,9 +3,9 @@ from enum import *
 
 from user_devices import StaticEnumQuantity
 
-class RigolDG4162Static(Device):
+class RigolDG4162Static(IntermediateDevice):
     def __init__(self, name, parent_device, connection, **kwargs):
-        Device.__init__(self, name, parent_device, connection, **kwargs)
+        IntermediateDevice.__init__(self, name, parent_device, connection, **kwargs)
 
         self.freq = StaticAnalogQuantity(self.name+'_freq', self, 'freq')
         self.amplitude = StaticAnalogQuantity(self.name+'_amplitude', self, 'amplitude')
@@ -14,9 +14,9 @@ class RigolDG4162Static(Device):
 
         return
 
-class RigolDG4162Sweep(Device):
+class RigolDG4162Sweep(IntermediateDevice):
     def __init__(self, name, parent_device, connection, **kwargs):
-        Device.__init__(self, name, parent_device, connection, **kwargs)
+        IntermediateDevice.__init__(self, name, parent_device, connection, **kwargs)
 
         self.freq_start = StaticAnalogQuantity(self.name+'_freq_start', self, 'freq_start')
         self.freq_stop = StaticAnalogQuantity(self.name+'_freq_stop', self, 'freq_stop')
@@ -35,7 +35,7 @@ class RigolDG4162Sweep(Device):
 
         return
 
-class RigolDG4162(IntermediateDevice):
+class RigolDG4162(Device):
     """A labscript_device for the Rigol DG4162 arbitrary waveform generator
           connection_table_properties (set once)
           termination: character signalling end of response
