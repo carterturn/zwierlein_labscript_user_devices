@@ -108,9 +108,9 @@ class _RigolDG4162InterfaceChannel(object):
 
     def static(self, freq, amplitude, fresh):
         if self.mode != 'static' or not fresh:
+            self.io.write(':SOUR{}:SWE:STAT OFF'.format(self.channel))
             self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
-            self.io.write(':SOUR{}:SWE:STAT OFF'.format(self.channel))
             fresh = False
 
         if self.freq != freq or not fresh:
@@ -394,66 +394,82 @@ class Rigol4162Worker(Worker):
         return remote_values
 
     def program_manual(self, values):
+        print('program_manual')
         for channel in [1, 2]:
+            print(channel)
             key = 'channel {:d}'.format(channel)
             if key in values.keys():
                 if values[key] is None:
-                    values[key] = {'state': 0}
+                    values[key] = {'state': False}
+            print(key)
             setting = values[key]
+            print(setting)
 
-            if setting['state'] == 0:
+            if not setting['state']:
                 self.rigol.output_off(channel)
                 continue
 
             if setting['mode'] == 'static':
+                print('Setting static')
                 self.rigol.static(channel, setting['freq'], setting['amplitude'])
+                print('Static set')
             elif setting['mode'] == 'sweep':
+                print('Setting sweep')
                 self.rigol.sweep(channel, setting['freq_start'], setting['freq_stop'],
                                  setting['amplitude'], setting['time'],
                                  setting['time_hold_start'], setting['time_hold_stop'],
                                  setting['time_return'], setting['spacing'],
                                  setting['trigger_slope'], setting['trigger_source'],
                                  setting['trigger_out'], setting['steps'])
+                print('Sweep set')
+            else:
+                print('Invalid mode')
 
             self.rigol.output_on(channel)
         return
 
-    def _parse_channel_dataset(dataset):
-        state = dataset['state']
-        if state == 0:
+    def _parse_channel_dataset(self, dataset):
+        state = dataset['state'][0]
+        if not state:
             return {'state': 0}
 
-        mode = dataset['mode']
+        mode = dataset['mode'][0].decode()
         if mode == 'static':
             return {'state': 1, 'mode': 'static',
-                    'freq': dataset['freq'], 'amplitude': dataset['amplitude']}
+                    'freq': dataset['freq'][0], 'amplitude': dataset['amplitude'][0]}
         elif mode == 'sweep':
             return {'state': 1, 'mode': 'sweep',
-                    'freq_start': dataset['freq_start'], 'freq_stop': dataset['freq_stop'],
-                    'amplitude': dataset['amplitude'], 'time': dataset['time'],
-                    'time_hold_start': dataset['time_hold_start'],
-                    'time_hold_stop': dataset['time_hold_stop'],
-                    'time_return': dataset['time_return'],
-                    'spacing': dataset['spacing'], 'steps': dataset['steps'],
-                    'trigger_slope': dataset['trigger_slope'],
-                    'trigger_source': dataset['trigger_source'],
-                    'trigger_out': dataset['trigger_out']}
+                    'freq_start': dataset['freq_start'][0],
+                    'freq_stop': dataset['freq_stop'][0],
+                    'amplitude': dataset['amplitude'][0],
+                    'time': dataset['time'][0],
+                    'time_hold_start': dataset['time_hold_start'][0],
+                    'time_hold_stop': dataset['time_hold_stop'][0],
+                    'time_return': dataset['time_return'][0],
+                    'spacing': dataset['spacing'][0],
+                    'steps': dataset['steps'][0],
+                    'trigger_slope': dataset['trigger_slope'][0],
+                    'trigger_source': dataset['trigger_source'][0],
+                    'trigger_out': dataset['trigger_out'][0]}
         else:
             return {'state': 0}
 
     def transition_to_buffered(self, device_name, h5file, initial_values, fresh):
+        print('transition_to_buffered')
         with h5py.File(h5file, 'r') as hdf5_file:
             group = hdf5_file['/devices/' + device_name]
             values = {}
             if 'channel 1' in group:
-                values['channel 1'] = _parse_channel_dataset(group['channel 1'])
+                values['channel 1'] = self._parse_channel_dataset(group['channel 1'])
             else:
-                values['channel 1'] = {'state': 'off'}
+                values['channel 1'] = {'state': False}
             if 'channel 2' in group:
-                values['channel 2'] = _parse_channel_dataset(group['channel 2'])
+                values['channel 2'] = self._parse_channel_dataset(group['channel 2'])
             else:
-                values['channel 2'] = {'state': 'off'}
-        return self.program_manual(values)
+                values['channel 2'] = {'state': False}
+        print(values)
+        self.program_manual(values)
+        return {}
 
     def transition_to_manual(self):
         return True
