@@ -415,7 +415,7 @@ class Rigol4162Worker(Worker):
                 print('Static set')
             elif setting['mode'] == 'sweep':
                 print('Setting sweep')
-                self.rigol.sweep(channel, setting['freq_start'], setting['freq_stop'],
+                self.rigol.sweep(channel, setting['freq'], setting['freq_stop'],
                                  setting['amplitude'], setting['time'],
                                  setting['time_hold_start'], setting['time_hold_stop'],
                                  setting['time_return'], setting['spacing'],
@@ -439,18 +439,18 @@ class Rigol4162Worker(Worker):
                     'freq': dataset['freq'][0], 'amplitude': dataset['amplitude'][0]}
         elif mode == 'sweep':
             return {'state': 1, 'mode': 'sweep',
-                    'freq_start': dataset['freq_start'][0],
+                    'freq': dataset['freq'][0],
                     'freq_stop': dataset['freq_stop'][0],
                     'amplitude': dataset['amplitude'][0],
                     'time': dataset['time'][0],
                     'time_hold_start': dataset['time_hold_start'][0],
                     'time_hold_stop': dataset['time_hold_stop'][0],
                     'time_return': dataset['time_return'][0],
-                    'spacing': dataset['spacing'][0],
+                    'spacing': dataset['spacing'][0].decode(),
                     'steps': dataset['steps'][0],
-                    'trigger_slope': dataset['trigger_slope'][0],
-                    'trigger_source': dataset['trigger_source'][0],
-                    'trigger_out': dataset['trigger_out'][0]}
+                    'trigger_slope': dataset['trigger_slope'][0].decode(),
+                    'trigger_source': dataset['trigger_source'][0].decode(),
+                    'trigger_out': dataset['trigger_out'][0].decode()}
         else:
             return {'state': 0}
 

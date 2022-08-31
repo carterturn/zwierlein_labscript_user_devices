@@ -4,7 +4,7 @@ from labscript_utils.qtwidgets.enumoutput import EnumOutput
 from labscript_utils.qtwidgets.analogoutput import AnalogOutput
 
 from user_devices import EO
-from user_devices.RigolAWG.enums import *
+from user_devices.RigolAWG.rigol_awg_enums import *
 
 class Rigol4162Tab(DeviceTab):
     def initialise_GUI(self):
@@ -27,9 +27,6 @@ class Rigol4162Tab(DeviceTab):
             outputs['amplitude'] = AO('amplitude', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'dBm', -30, 30, 1, 2)
-            outputs['freq_start'] = AO('freq_start', device.name, self.device_name,
-                                       self.program_device, self.settings,
-                                       None, None, 'Hz', 0, 1e10, 1e3, 5)
             outputs['freq_stop'] = AO('freq_stop', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'Hz', 0, 1e10, 1e3, 5)

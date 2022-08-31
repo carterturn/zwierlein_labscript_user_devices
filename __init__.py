@@ -9,7 +9,9 @@ from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
 from qtutils.qt.QtWidgets import *
 
-from labscript import Device, Output, set_passed_properties
+from pylab import *
+
+from labscript import Device, config, Output, set_passed_properties
 from labscript_utils.qtwidgets.enumoutput import EnumOutput
 from labscript_utils.unitconversions import UnitConversion
 import labscript_devices
@@ -143,10 +145,10 @@ class StaticEnumQuantity(Output):
     description = 'static enum quantity'
 
     @set_passed_properties(property_names={})
-    def __init__(self, name, parent_device, connection, enum_class,
+    def __init__(self, name, parent_device, connection, enum_class, default_value,
                  unit_conversion_class=None, unit_conversion_parameters=None,
                  static_value=None, **kwargs):
-        Device.__init__(self, name, parent_device, connection, **kwargs)
+        Output.__init__(self, name, parent_device, connection, **kwargs)
 
         self.instructions = {}
         self.default_value = default_value
@@ -166,7 +168,7 @@ class StaticEnumQuantity(Output):
         		or the value is not in the list of allowed values.
         """
         if self._static_value == None:
-            if not isinstance(value, enum_class):
+            if not isinstance(value, self.enum_class):
                 raise LabscriptError('You cannot program the value %s to %s as it is not a valid value'%(str(value), self.name))
             self._static_value = value
         else:
