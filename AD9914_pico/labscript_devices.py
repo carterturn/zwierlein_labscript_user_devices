@@ -1,8 +1,9 @@
-from labscript import TriggerableDevice, set_passed_properties
+from labscript import TriggerableDevice, IntermediateDevice, set_passed_properties
 
 import numpy as np
 
-class AD9914Pico(TriggerableDevice):
+#class AD9914Pico(TriggerableDevice):
+class AD9914Pico(IntermediateDevice):
 
     @set_passed_properties(
         property_names={
@@ -14,12 +15,14 @@ class AD9914Pico(TriggerableDevice):
     )
 
     def __init__(self, name, parent_device, com_port, **kwargs):
-        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
+$        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
+        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
         self.BLACS_connection = 'AD9914Pico: {}'.format(name)
         self.command_list = []
 
     def generate_code(self, hdf5_file):
-        TriggerableDevice.generate_code(self, hdf5_file)
+#        TriggerableDevice.generate_code(self, hdf5_file)
+        IntermediateDevice.generate_code(self, hdf5_file)
 
         self.command_list.sort(key=lambda cl: cl['t'])
         command_array = np.empty(len(self.command_list),
