@@ -77,6 +77,8 @@ class AD9914PicoWorker(Worker):
         final_values = {}
         final_values['dds_data'] = {}
 
+        self.intf.clear()
+
         with h5py.File(h5file, 'r') as hdf5_file:
             group = hdf5_file['devices'][device_name]
             commands = group['dds_data']
@@ -85,11 +87,13 @@ class AD9914PicoWorker(Worker):
                     if not self.intf.add(command['start freq'], command['start amp'],
                                          command['stop freq'], command['stop amp'],
                                          command['sweep time'], command['trigger']):
-                        return False
+                        raise RuntimeError('Error programming AD9914 Pico')
                 else:
                     if not self.intf.add(command['start freq'], command['start amp'],
                                          trigger=command['trigger']):
-                        return False
+                        raise RuntimeError('Error programming AD9914 Pico')
+
+        self.intf.run()
 
         return {}
 
