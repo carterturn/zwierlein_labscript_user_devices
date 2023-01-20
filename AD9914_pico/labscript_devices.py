@@ -15,7 +15,7 @@ class AD9914Pico(IntermediateDevice):
     )
 
     def __init__(self, name, parent_device, com_port, **kwargs):
-$        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
+#        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
         IntermediateDevice.__init__(self, name, parent_device, **kwargs)
         self.BLACS_connection = 'AD9914Pico: {}'.format(name)
         self.command_list = []
