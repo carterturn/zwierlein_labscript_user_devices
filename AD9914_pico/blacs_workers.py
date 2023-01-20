@@ -9,25 +9,25 @@ class AD9914PicoInterface(object):
 
         self.clear()
         if not self.clear():
-            raise RunetimeError('Unable to communicate with AD9914 Pico')
+            raise RuntimeError('Unable to communicate with AD9914 Pico')
 
     def clear(self):
         '''Sends 'cls' command, which clears the currently stored run.
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'cls\n')
-        return self.conn.readlines()[-1] == '> '
+        return self.conn.readline() == b'> '
 
     def abort(self):
         '''Sends 'abt' command, which stops the current run (or does nothing if no run).
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'abt\n')
-        return self.conn.readlines()[-1] == '> '
+        return self.conn.readline() == b'> '
 
     def run(self):
         '''Sends 'run' command, which starts the current run.
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'run\n')
-        return self.conn.readlines()[-1] == '> '
+        return self.conn.readline() == b'> '
 
     def dump(self):
         '''Sends 'dmp' command, which dumps the currently loaded run.
@@ -43,19 +43,19 @@ class AD9914PicoInterface(object):
         else:
             trigger = 0
         if stop_freq is None and stop_amp is None:
-            self.conn.write(b'add:cst,{},cst,{},{}\n'.format(start_freq, start_amp), trigger)
+            self.conn.write(b'add:cst,%e,cst,%e,%e\n' % (start_freq, start_amp, trigger))
         elif sweep_time is None:
-            raise RunetimeError('Error AD9914 Pico attempting to sweep with no sweep time')
+            raise RuntimeError('Error AD9914 Pico attempting to sweep with no sweep time')
         elif stop_amp is None:
-            self.conn.write(b'add:lin,{},{},cst,{},{},{}\n'
-                            .format(start_freq, stop_freq, start_amp, sweep_time, trigger))
+            self.conn.write(b'add:lin,%e,%e,cst,%e,%e,%e\n'
+                            % (start_freq, stop_freq, start_amp, sweep_time, trigger))
         elif stop_freq is None:
-            self.conn.write(b'add:cst,{},lin,{},{},{},{}\n'
-                            .format(start_freq, start_amp, stop_amp, sweep_time, trigger))
+            self.conn.write(b'add:cst,%e,lin,%e,%e,%e,%e\n'
+                            % (start_freq, start_amp, stop_amp, sweep_time, trigger))
         else:
-            self.conn.write(b'add:lin,{},{},lin,{},{},{},{}\n'
-                            .format(start_freq, stop_freq, start_amp, stop_amp, sweep_time, trigger))
-        return self.conn.readlines()[-1] == '> '
+            self.conn.write(b'add:lin,%e,%e,lin,%e,%e,%e,%e\n'
+                            % (start_freq, stop_freq, start_amp, stop_amp, sweep_time, trigger))
+        return self.conn.readlines()[-1] == b'> '
 
     def close(self):
         self.conn.close()
@@ -69,9 +69,9 @@ class AD9914PicoWorker(Worker):
         if not self.intf.clear():
             return False
 
-        self.intf.add(values['channel 0']['freq'], values['channel 0']['amp'])
+        self.intf.add(values['output']['freq'], values['output']['amp'], trigger=False)
 
-        return self.intf.run()
+        self.intf.run()
 
     def transition_to_buffered(self, device_name, h5file, initial_values, fresh):
         final_values = {}
@@ -91,7 +91,7 @@ class AD9914PicoWorker(Worker):
                                          trigger=command['trigger']):
                         return False
 
-        return True
+        return {}
 
     def transition_to_manual(self):
         return True

@@ -2,13 +2,13 @@ from blacs.device_base_class import DeviceTab
 
 class AD9914PicoTab(DeviceTab):
     def initialise_GUI(self):
-        dds_prop = {}
-        dds_prop['freq'] = {'base_unit': 'Hz',
-                            'min': 0.0, 'max': 1.2e9,
-                            'step': 1e5, 'decimals': 2}
-        dds_prop['amp'] = {'base_unit': 'Arb',
-                           'min': 0.0, 'max': 1.0,
-                           'step': 1./1024., 'decimals': 4}
+        dds_prop = {'output': {}}
+        dds_prop['output']['freq'] = {'base_unit': 'Hz',
+                                      'min': 0.0, 'max': 1.2e9,
+                                      'step': 1e5, 'decimals': 2}
+        dds_prop['output']['amp'] = {'base_unit': 'Arb',
+                                     'min': 0.0, 'max': 1.0,
+                                     'step': 1./1024., 'decimals': 4}
 
         self.create_dds_outputs(dds_prop)
         dds_widgets, _, _ = self.auto_create_widgets()
