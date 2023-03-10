@@ -4,7 +4,7 @@ class AD9914PicoTab(DeviceTab):
     def initialise_GUI(self):
         dds_prop = {'output': {}}
         dds_prop['output']['freq'] = {'base_unit': 'Hz',
-                                      'min': 0.0, 'max': 1.2e9,
+                                      'min': 0.0, 'max': 2.4e9,
                                       'step': 1e5, 'decimals': 2}
         dds_prop['output']['amp'] = {'base_unit': 'Arb',
                                      'min': 0.0, 'max': 1.0,
