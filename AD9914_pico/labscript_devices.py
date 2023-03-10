@@ -53,6 +53,7 @@ class AD9914Pico(TriggerableDevice):
                                   'sweep_time': duration,
                                   'trigger': True,
                                   })
+        self.trigger(t=t, duration=duration/2.)
 
     def constant(self, t, freq, amp):
         self.command_list.append({'t': t,
@@ -63,6 +64,7 @@ class AD9914Pico(TriggerableDevice):
                                   'sweep': False,
                                   'trigger': True,
                                   })
+        self.trigger(t=t, duration=1e-6)
 
     def customramp(self, t, duration, freq_function, amp_function, **kwargs):
         t_step = 1. / kwargs.pop('samplerate')
@@ -105,3 +107,4 @@ class AD9914Pico(TriggerableDevice):
                                   'sweep_time': duration + t_step - (t + t_rel),
                                   'trigger': False
                                   })
+        self.trigger(t=t, duration=duration/2.)
