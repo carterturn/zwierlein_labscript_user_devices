@@ -14,6 +14,7 @@ class AD9914Pico(TriggerableDevice):
     )
 
     def __init__(self, name, parent_device, com_port, **kwargs):
+        self.trigger_edge_type = parent_device.trigger_edge_type
         TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
         self.BLACS_connection = 'AD9914Pico: {}'.format(name)
         self.command_list = []
