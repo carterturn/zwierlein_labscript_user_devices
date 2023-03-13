@@ -5,7 +5,8 @@ class AD9914PicoInterface(object):
     def __init__(self, com_port):
         global serial; import serial
 
-        self.conn = serial.Serial(com_port, 115200, timeout=0.1)
+        self.timeout = 0.1
+        self.conn = serial.Serial(com_port, 115200, timeout=self.timeout)
 
         self.clear()
         if not self.clear():
@@ -15,25 +16,25 @@ class AD9914PicoInterface(object):
         '''Sends 'cls' command, which clears the currently stored run.
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'cls\n')
-        return self.conn.readline() == b'> '
+        return self.conn.read_until(b'> ')
 
     def abort(self):
         '''Sends 'abt' command, which stops the current run (or does nothing if no run).
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'abt\n')
-        return self.conn.readline() == b'> '
+        return self.conn.read_until(b'> ')
 
     def run(self):
         '''Sends 'run' command, which starts the current run.
         Returns true if response is the expected prompt (false otherwise).'''
         self.conn.write(b'run\n')
-        return self.conn.readline() == b'> '
+        return self.conn.read_until(b'> ')
 
     def dump(self):
         '''Sends 'dmp' command, which dumps the currently loaded run.
         Returns the dump of the run.'''
         self.conn.write(b'dmp\n')
-        return self.conn.readlines()[:-1]
+        return self.conn.read_until(b'> ')
 
     def add(self, start_freq, start_amp, stop_freq=None, stop_amp=None, sweep_time=None, trigger=True):
         '''Sends 'add' command with the given parameters
@@ -43,19 +44,23 @@ class AD9914PicoInterface(object):
         else:
             trigger = 0
         if stop_freq is None and stop_amp is None:
-            self.conn.write(b'add:cst,%e,cst,%e,%e\n' % (start_freq, start_amp, trigger))
+            self.conn.write('add:cst,{:e},cst,{:e},{:e}\n'
+                            .format(start_freq, start_amp, trigger).encode())
         elif sweep_time is None:
             raise RuntimeError('Error AD9914 Pico attempting to sweep with no sweep time')
         elif stop_amp is None:
-            self.conn.write(b'add:lin,%e,%e,cst,%e,%e,%e\n'
-                            % (start_freq, stop_freq, start_amp, sweep_time, trigger))
+            self.conn.write('add:lin,{:e},{:e},cst,{:e},{:e},{:e}\n'
+                            .format(start_freq, stop_freq, start_amp, sweep_time, trigger)
+                            .encode())
         elif stop_freq is None:
-            self.conn.write(b'add:cst,%e,lin,%e,%e,%e,%e\n'
-                            % (start_freq, start_amp, stop_amp, sweep_time, trigger))
+            self.conn.write('add:cst,{:e},lin,{:e},{:e},{:e},{:e}\n'
+                            .format(start_freq, start_amp, stop_amp, sweep_time, trigger)
+                            .encode())
         else:
-            self.conn.write(b'add:lin,%e,%e,lin,%e,%e,%e,%e\n'
-                            % (start_freq, stop_freq, start_amp, stop_amp, sweep_time, trigger))
-        return self.conn.readlines()[-1] == b'> '
+            self.conn.write('add:lin,{:e},{:e},lin,{:e},{:e},{:e},{:e}\n'
+                            .format(start_freq, stop_freq, start_amp, stop_amp, sweep_time, trigger)
+                            .encode())
+        return self.conn.read_until(b'> ')
 
     def close(self):
         self.conn.close()
@@ -66,8 +71,7 @@ class AD9914PicoWorker(Worker):
 
     def program_manual(self, values):
         self.intf.abort()
-        if not self.intf.clear():
-            return False
+        self.intf.clear()
 
         self.intf.add(values['output']['freq'], values['output']['amp'], trigger=False)
 
@@ -84,14 +88,12 @@ class AD9914PicoWorker(Worker):
             commands = group['dds_data']
             for command in commands:
                 if command['sweep']:
-                    if not self.intf.add(command['start freq'], command['start amp'],
+                    self.intf.add(command['start freq'], command['start amp'],
                                          command['stop freq'], command['stop amp'],
                                          command['sweep time'], command['trigger']):
-                        raise RuntimeError('Error programming AD9914 Pico')
                 else:
-                    if not self.intf.add(command['start freq'], command['start amp'],
+                    self.intf.add(command['start freq'], command['start amp'],
                                          trigger=command['trigger']):
-                        raise RuntimeError('Error programming AD9914 Pico')
 
         self.intf.run()
 
@@ -101,10 +103,12 @@ class AD9914PicoWorker(Worker):
         return True
 
     def abort_buffered(self):
-        return self.intf.abort()
+        self.intf.abort()
+        return True
 
     def abort_transition_to_buffered(self):
-        return self.intf.abort()
+        self.intf.abort()
+        return True
 
     def shutdown(self):
         self.intf.close()
