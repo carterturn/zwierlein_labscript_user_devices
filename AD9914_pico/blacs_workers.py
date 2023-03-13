@@ -89,11 +89,11 @@ class AD9914PicoWorker(Worker):
             for command in commands:
                 if command['sweep']:
                     self.intf.add(command['start freq'], command['start amp'],
-                                         command['stop freq'], command['stop amp'],
-                                         command['sweep time'], command['trigger']):
+                                  command['stop freq'], command['stop amp'],
+                                  command['sweep time'], command['trigger'])
                 else:
                     self.intf.add(command['start freq'], command['start amp'],
-                                         trigger=command['trigger']):
+                                  trigger=command['trigger'])
 
         self.intf.run()
 
