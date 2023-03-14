@@ -1,5 +1,5 @@
-#from blacs.tab_base_classes import Worker
-#import labscript_utils.h5_lock, h5py
+from blacs.tab_base_classes import Worker
+import labscript_utils.h5_lock, h5py
 
 class AD9914PicoInterface(object):
     def __init__(self, com_port):
