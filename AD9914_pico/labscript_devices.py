@@ -65,7 +65,7 @@ class AD9914Pico(TriggerableDevice):
                                   'sweep': False,
                                   'trigger': True,
                                   })
-        self.trigger(t=t, duration=1e-6)
+        self.trigger(t=t, duration=2e-6) # Need to be >1e-6s for safe triggering with NI card
 
     def customramp(self, t, duration, freq_function, amp_function, **kwargs):
         t_step = 1. / kwargs.pop('samplerate')
