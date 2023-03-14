@@ -66,11 +66,11 @@ class AD9914PicoInterface(object):
         '''Sends 'add' commands for each command in commands list. Returns response.'''
         for command in commands:
             trigger = command['trigger']
-            start_freq = command['start_freq']
-            start_amp = command['start_amp']
-            stop_freq = command['stop_freq']
-            stop_amp = command['stop_amp']
-            sweep_time = command['sweep_time']
+            start_freq = command['start freq']
+            start_amp = command['start amp']
+            stop_freq = command['stop freq']
+            stop_amp = command['stop amp']
+            sweep_time = command['sweep time']
             if trigger:
                 trigger = 1
             else:
