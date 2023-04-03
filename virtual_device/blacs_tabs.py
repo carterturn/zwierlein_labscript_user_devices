@@ -29,7 +29,7 @@ class VirtualDeviceTab(Tab):
         else:
             toolpalette = toolpalettegroup.append_new_palette(name)
 
-        for _, do_widget in self.do_widgets.items():
+        for _, widget in widgets.items():
             toolpalette.addWidget(do_widget, True)
 
         self.get_tab_layout().addWidget(widget)
