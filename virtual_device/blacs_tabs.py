@@ -51,12 +51,18 @@ class VirtualDeviceTab(Tab):
             self.ao_widgets[full_conn_name].last_AO = None
             self.ao_widgets[full_conn_name].closing = False
 
-    # Boilerplate functions, should do nothing
-    def abort_buffered(self, current_queue):
-        pass
-
+    # Boilerplate functions, do nothing, do it fast
     def transition_to_buffered(self, h5file, notify_queue):
         notify_queue.put([self.device_name, 'success'])
+        return True
+
+    def abort_transition_to_buffered(self):
+        pass
+
+    def abort_buffered(self, notify_queue):
+        notify_queue.put([self.device_name, 'success'])
+        return True
 
     def transition_to_manual(self, notify_queue):
         notify_queue.put([self.device_name, 'success'])
+        return True
