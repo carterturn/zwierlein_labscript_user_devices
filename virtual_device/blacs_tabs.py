@@ -50,3 +50,13 @@ class VirtualDeviceTab(Tab):
             self.ao_widgets[full_conn_name] =  AnalogOutput('%s\n%s' % (name, full_conn_name))
             self.ao_widgets[full_conn_name].last_AO = None
             self.ao_widgets[full_conn_name].closing = False
+
+    # Boilerplate functions, should do nothing
+    def abort_buffered(self):
+        pass
+
+    def transition_to_buffered(self):
+        pass
+
+    def transition_to_manual(self):
+        pass
