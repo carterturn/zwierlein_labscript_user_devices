@@ -2,6 +2,7 @@ from qtutils.qt.QtWidgets import QWidget, QSpacerItem, QSizePolicy
 
 from blacs.tab_base_classes import Tab
 from labscript_utils.qtwidgets.digitaloutput import DigitalOutput, InvertedDigitalOutput
+from labscript_utils.qtwidgets.analogoutput import AnalogOutput
 from labscript_utils.qtwidgets.toolpalette import ToolPaletteGroup
 
 class VirtualDeviceTab(Tab):
