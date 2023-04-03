@@ -52,11 +52,11 @@ class VirtualDeviceTab(Tab):
             self.ao_widgets[full_conn_name].closing = False
 
     # Boilerplate functions, should do nothing
-    def abort_buffered(self):
+    def abort_buffered(self, current_queue):
         pass
 
-    def transition_to_buffered(self):
+    def transition_to_buffered(self, h5file, current_queue):
         pass
 
-    def transition_to_manual(self):
+    def transition_to_manual(self, current_queue):
         pass
