@@ -55,8 +55,8 @@ class VirtualDeviceTab(Tab):
     def abort_buffered(self, current_queue):
         pass
 
-    def transition_to_buffered(self, h5file, current_queue):
-        pass
+    def transition_to_buffered(self, h5file, notify_queue):
+        notify_queue.put([self.device_name, 'success'])
 
-    def transition_to_manual(self, current_queue):
-        pass
+    def transition_to_manual(self, notify_queue):
+        notify_queue.put([self.device_name, 'success'])
