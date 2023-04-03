@@ -30,7 +30,7 @@ class VirtualDeviceTab(Tab):
             toolpalette = toolpalettegroup.append_new_palette(name)
 
         for _, widget in widgets.items():
-            toolpalette.addWidget(do_widget, True)
+            toolpalette.addWidget(widget, True)
 
         self.get_tab_layout().addWidget(widget)
         self.get_tab_layout().addItem(QSpacerItem(0,0,QSizePolicy.Minimum,QSizePolicy.MinimumExpanding))
