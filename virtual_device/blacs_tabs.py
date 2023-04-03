@@ -42,10 +42,10 @@ class VirtualDeviceTab(Tab):
             self.do_widgets[full_conn_name].last_DO = None
             self.do_widgets[full_conn_name].closing = False
 
-    def create_ao_widgets(self, digital_channels):
+    def create_ao_widgets(self, analog_channels):
         self.ao_widgets = {}
-        for device_name, connection_name, name in digital_channels:
+        for device_name, connection_name, name in analog_channels:
             full_conn_name = '%s.%s' % (device_name, connection_name)
-            self.do_widgets[full_conn_name] =  AnalogOutput('%s\n%s' % (name, full_conn_name))
-            self.do_widgets[full_conn_name].last_AO = None
-            self.do_widgets[full_conn_name].closing = False
+            self.ao_widgets[full_conn_name] =  AnalogOutput('%s\n%s' % (name, full_conn_name))
+            self.ao_widgets[full_conn_name].last_AO = None
+            self.ao_widgets[full_conn_name].closing = False
