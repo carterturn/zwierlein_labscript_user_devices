@@ -47,7 +47,7 @@ class VirtualDeviceTab(Tab):
         self.ao_widgets = {}
         for device_name, connection_name, name in analog_channels:
             full_conn_name = '%s.%s' % (device_name, connection_name)
-            self.ao_widgets[full_conn_name] =  AnalogOutput('%s\n%s' % (name, full_conn_name))
+            self.ao_widgets[full_conn_name] =  AnalogOutput(name, connection_name=full_conn_name)
             self.ao_widgets[full_conn_name].last_AO = None
             self.ao_widgets[full_conn_name].closing = False
 
