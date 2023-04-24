@@ -1,10 +1,10 @@
-from labscript import Device, DigitalOut, IntermediateDevice, LabscriptError, set_passed_properties, StaticAnalogQuantity, StaticDigitalQuantity, TriggerableDevice
+from labscript import Device, DigitalOut, LabscriptError, set_passed_properties, StaticAnalogQuantity, StaticDigitalQuantity, TriggerableDevice
 from user_devices.RigolAWG.rigol_awg_enums import *
 import numpy as np
 
 from user_devices import StaticEnumQuantity
 
-class RigolDG4162(IntermediateDevice):
+class RigolDG4162(TriggerableDevice):
     """A labscript_device for the Rigol DG4162 arbitrary waveform generator
           connection_table_properties (set once)
           termination: character signalling end of response
@@ -24,7 +24,8 @@ class RigolDG4162(IntermediateDevice):
     def __init__(self, name, parent_device, termination='\n', resource_str=None, access_mode=None,
                  frequency_limits=None, amplitude_limits=None, timeout=5,
                  connection_1=None, connection_2=None, **kwargs):
-        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
+        self.trigger_edge_type = parent_device.trigger_edge_type
+        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
         self.name = name
         assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"
         self.BLACS_connection = access_mode + ',' + resource_str
@@ -55,7 +56,7 @@ class RigolDG4162(IntermediateDevice):
             self.channels.append(channel_props)
 
     def generate_code(self, hdf5_file):
-        Device.generate_code(self, hdf5_file)
+        TriggerableDevice.generate_code(self, hdf5_file)
         group = self.init_device_group(hdf5_file)
         for channel in [1, 2]:
             params = np.empty(1, dtype=[('state', bool),
