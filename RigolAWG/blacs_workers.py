@@ -17,8 +17,8 @@ class _RigolIO():
         elif self.access_mode == 'usb':
             import pyvisa
 
-            self.rigol = pyisa.ResourceManager().open_resource(resource_str)
-            raise RuntimeException('RigolInterface access_mode \'usb\' is not implemented.')
+            self.rigol = pyvisa.ResourceManager().open_resource(resource_str)
+            self.socket = None
 
         return
 
