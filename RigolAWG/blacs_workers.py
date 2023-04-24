@@ -15,29 +15,34 @@ class _RigolIO():
 
             self.rigol = self.socket.makefile('brw')
         elif self.access_mode == 'usb':
+            import pyvisa
+
+            self.rigol = pyisa.ResourceManager().open_resource(resource_str)
             raise RuntimeException('RigolInterface access_mode \'usb\' is not implemented.')
 
         return
 
     def write(self, command):
+        command = command + '\n'
         if self.socket is not None:
-            command = command + '\n'
             command = command.encode('ascii')
 
         self.rigol.write(command)
         if self.socket is not None:
             self.rigol.flush()
+            sleep(20e-3) # Rigol gets sad if commands come too fast. 20ms is empirical limit.
 
-        sleep(20e-3) # Rigol gets sad if commands come too fast. 20ms is empirical limit.
         return
 
-    def read(self):
+    def query(self, command):
         if self.socket is not None:
+            self.write(command)
+
             resp = self.rigol.readline().decode('ascii').strip()
             self.rigol.readline() # Rigol sends blank line afterwards
             return resp
         else:
-            return self.rigol.read()
+            return self.rigol.query(command)
 
     def close(self):
         self.rigol.close()
@@ -82,8 +87,7 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_state(self):
-        self.io.write(':OUTP{}:STAT?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':OUTP{}:STAT?'.format(self.channel))
 
     def get_mode(self):
         return self.mode
@@ -99,12 +103,10 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_static_freq(self):
-        self.io.write(':SOUR{}:FREQ?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:FREQ?'.format(self.channel))
 
     def get_static_amplitude(self):
-        self.io.write(':SOUR{}:VOLT?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
 
     def static(self, freq, amplitude, fresh):
         if self.mode != 'static' or not fresh:
@@ -128,52 +130,40 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_sweep_freq_start(self):
-        self.io.write(':SOUR{}:FREQ:STAR?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:FREQ:STAR?'.format(self.channel))
 
     def get_sweep_freq_stop(self):
-        self.io.write(':SOUR{}:FREQ:STOP?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:FREQ:STOP?'.format(self.channel))
 
     def get_sweep_amplitude(self):
-        self.io.write(':SOUR{}:VOLT?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
 
     def get_sweep_time(self):
-        self.io.write(':SOUR{}:SWE:TIME?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:TIME?'.format(self.channel))
 
     def get_sweep_time_hold_start(self):
-        self.io.write(':SOUR{}:SWE:HTIM:STAR?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:HTIM:STAR?'.format(self.channel))
 
     def get_sweep_time_hold_stop(self):
-        self.io.write(':SOUR{}:SWE:HTIM:STOP?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:HTIM:STOP?'.format(self.channel))
 
     def get_sweep_time_return(self):
-        self.io.write(':SOUR{}:SWE:HTIM:RTIM?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:HTIM:RTIM?'.format(self.channel))
 
     def get_sweep_spacing(self):
-        self.io.write(':SOUR{}:SWE:SPAC?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:SPAC?'.format(self.channel))
 
     def get_sweep_trigger_slope(self):
-        self.io.write(':SOUR{}:SWE:TRIG:SLOP?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:TRIG:SLOP?'.format(self.channel))
 
     def get_sweep_trigger_source(self):
-        self.io.write(':SOUR{}:SWE:TRIG:SOUR?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:TRIG:SOUR?'.format(self.channel))
 
     def get_sweep_trigger_out(self):
-        self.io.write(':SOUR{}:SWE:TRIG:TRIGO?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:TRIG:TRIGO?'.format(self.channel))
 
     def get_sweep_steps(self):
-        self.io.write(':SOUR{}:SWE:STEP?'.format(self.channel))
-        return self.io.read()
+        return self.io.query(':SOUR{}:SWE:STEP?'.format(self.channel))
 
     def sweep(self, freq_start, freq_stop, amplitude,
               time, time_hold_start, time_hold_stop, time_return, spacing,
@@ -348,8 +338,8 @@ class RigolDG4162Interface(object):
     def write(self, command):
         return self.io.write(command)
 
-    def read(self):
-        return self.io.read()
+    def query(self, command):
+        return self.io.query(command)
 
     def close(self):
         return self.io.close()
