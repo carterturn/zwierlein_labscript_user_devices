@@ -10,8 +10,9 @@ class Rigol4162Tab(DeviceTab):
     def initialise_GUI(self):
         device = self.settings['connection_table'].find_by_name(self.device_name)
         properties = device.properties
-        self.access_mode = device.BLACS_connection.split(',').pop(0)
-        self.resource_str = device.BLACS_connection.split(',').pop(1)
+
+        self.access_mode = properties.access_mode
+        self.resource_str = properties.resource_str
 
         self._output_sets = {}
 

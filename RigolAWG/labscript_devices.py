@@ -1,11 +1,72 @@
-from labscript import Device, DigitalOut, LabscriptError, set_passed_properties, StaticAnalogQuantity, StaticDigitalQuantity, TriggerableDevice
+from labscript import IntermediateDevice, DigitalOut, LabscriptError, set_passed_properties, StaticAnalogQuantity, StaticDigitalQuantity, TriggerableDevice
 from user_devices.RigolAWG.rigol_awg_enums import *
 import numpy as np
 
-from user_devices import StaticEnumQuantity
+class RigolDG4162Channel(TriggerableDevice):
+    description = 'Rigol DG4162 arbitrary waveform generator channel'
 
-class RigolDG4162(TriggerableDevice):
-    """A labscript_device for the Rigol DG4162 arbitrary waveform generator
+    def __init__(self, name, parent_device, channel=0):
+        self.trigger_edge_type = parent_device.trigger_edge_type
+        TriggerableDevice.__init__(self, name, parent_device, connection='trigger')
+        self.name = name
+
+        assert channel in [1, 2], "RigolDG4162Channel only has channel 1 or channel 2"
+
+        self.channel = channel
+        self.state = 0
+        self.mode = 'static'
+        self.freq = 0.f
+        self.freq_stop = 0.f
+        self.amplitude = 0.f
+        self.time = 0.f
+        self.time_hold_start = 0.f
+        self.time_hold_stop = 0.f
+        self.time_return = 0.f
+        self.spacing = 'LIN'
+        self.steps = 0
+        self.trigger_slope = 'POS'
+        self.trigger_source = 'EXT'
+        self.trigger_out = 'OFF'
+
+        self.setup = False
+
+    def static_output(self, amp, freq):
+        if self.setup:
+            raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
+        self.state = 1
+        self.mode = 'static'
+        self.freq = freq
+        self.amplitude = amp
+
+        self.setup = True
+
+    def sweep_output(self, t, amp, freq_start, freq_stop, ramp_time,
+                     time_hold_start=0, time_hold_stop=0, time_return=0, steps=2048):
+        if self.setup:
+            raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
+        self.state = 1
+        self.mode = 'sweep'
+        self.freq = freq_start
+        self.freq_stop = freq_stop
+        self.amplitude = amp
+
+        self.time = ramp_time
+        self.time_hold_start = time_hold_start
+        self.time_hold_stop = time_hold_stop
+        self.time_return = time_return
+        self.steps = steps
+
+        self.parent_device.trigger(t, 1e-4)
+
+        self.setup = True
+
+    def generate_code(self, hdf5_file):
+        pass
+
+class RigolDG4162(IntermediateDevice):
+    allowed_children = [RigolDG4162Channel]
+
+    """A labscript_device for a Rigol DG4162 arbitrary waveform generator
           connection_table_properties (set once)
           termination: character signalling end of response
           resource_str: IP address or USBTMC name
@@ -21,11 +82,11 @@ class RigolDG4162(TriggerableDevice):
                                             'frequency_limits', 'amplitude_limits'],
         }
     )
-    def __init__(self, name, parent_device, termination='\n', resource_str=None, access_mode=None,
-                 frequency_limits=None, amplitude_limits=None, timeout=5,
-                 connection_1=None, connection_2=None, **kwargs):
-        self.trigger_edge_type = parent_device.trigger_edge_type
-        TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
+    def __init__(self, name, channel_1_trigger, channel_2_trigger,
+                 termination='\n', resource_str=None, access_mode=None,
+                 frequency_limits=None, amplitude_limits=None, timeout=5, **kwargs):
+        IntermediateDevice.__init__(self, name, None, **kwargs)
+
         self.name = name
         assert access_mode in ['eth', 'usb'], "Access mode must be one of 'eth' (Ethernet) or 'usb' (USB)"
         self.BLACS_connection = access_mode + ',' + resource_str
@@ -34,58 +95,57 @@ class RigolDG4162(TriggerableDevice):
         self.frequency_limits = frequency_limits
         self.amplitude_limits = amplitude_limits
 
-        self.channels = []
+        if channel_1_trigger is not None:
+            self.channel_1 = RigolDG4162Channel(name + '_1', channel_1_trigger, 1)
+            self.child_devices.append(self.channel_1)
+        else:
+            self.channel_1 = None
 
-        for channel in [1, 2]:
-            channel_props = {'channel': channel}
-            channel_props['state'] = StaticDigitalQuantity(self.name+'_channel_{:d}_state'.format(channel), self, None)
-            channel_props['mode'] = StaticEnumQuantity(self.name+'_channel_{:d}_mode'.format(channel), self, None, RigolDG4162EnumMode, RigolDG4162EnumMode.static)
-            channel_props['freq'] = StaticAnalogQuantity(self.name+'_channel_{:d}_freq'.format(channel), self, None)
-            channel_props['freq_stop'] = StaticAnalogQuantity(self.name+'_channel_{:d}_freq_stop'.format(channel), self, None)
-            channel_props['amplitude'] = StaticAnalogQuantity(self.name+'_channel_{:d}_amplitude'.format(channel), self, None)
-            channel_props['time'] = StaticAnalogQuantity(self.name+'_channel_{:d}_time'.format(channel), self, None)
-            channel_props['time_hold_start'] = StaticAnalogQuantity(self.name+'_channel_{:d}_time_hold_start'.format(channel), self, None)
-            channel_props['time_hold_stop'] = StaticAnalogQuantity(self.name+'_channel_{:d}_time_hold_stop'.format(channel), self, None)
-            channel_props['time_return'] = StaticAnalogQuantity(self.name+'_channel_{:d}_time_return'.format(channel), self, None)
-            channel_props['spacing'] = StaticEnumQuantity(self.name+'_channel_{:d}_spacing'.format(channel), self, None, RigolDG4162EnumSpacing, RigolDG4162EnumSpacing.LIN)
-            channel_props['steps'] = StaticAnalogQuantity(self.name+'_channel_{:d}_steps'.format(channel), self, None)
-            channel_props['trigger_slope'] = StaticEnumQuantity(self.name+'_channel_{:d}_trigger_slope'.format(channel), self, None, RigolDG4162EnumTriggerSlope, RigolDG4162EnumTriggerSlope.POS)
-            channel_props['trigger_source'] = StaticEnumQuantity(self.name+'_channel_{:d}_trigger_source'.format(channel), self, None, RigolDG4162EnumTriggerSource, RigolDG4162EnumTriggerSource.EXT)
-            channel_props['trigger_out'] = StaticEnumQuantity(self.name+'_channel_{:d}_trigger_out'.format(channel), self, None, RigolDG4162EnumTriggerOut, RigolDG4162EnumTriggerOut.OFF)
-            channel_props['trigger'] = DigitalOut(self.name+'_channel_{:d}_trigger'.format(channel), self, locals()['connection_{:d}'.format(channel)])
-            self.channels.append(channel_props)
+        if channel_2_trigger is not None:
+            self.channel_2 = RigolDG4162Channel(name + '_2', channel_2_trigger, 2)
+            self.child_devices.append(self.channel_2)
+        else:
+            self.channel_2 = None
+
+    def get_channel_params(channel):
+        params = np.empty(1, dtype=[('state', bool),
+                                    ('mode', '<S8'),
+                                    ('freq', float),
+                                    ('freq_stop', float),
+                                    ('amplitude', float),
+                                    ('time', float),
+                                    ('time_hold_start', float),
+                                    ('time_hold_stop', float),
+                                    ('time_return', float),
+                                    ('spacing', '<S3'),
+                                    ('steps', int),
+                                    ('trigger_slope', '<S3'),
+                                    ('trigger_source', '<S3'),
+                                    ('trigger_out', '<S3'),
+                                    ])
+        params['state'] = channel.state
+        params['mode'] = channel.mode
+        params['freq'] = channel.freq
+        params['freq_stop'] = channel.freq_stop
+        params['amplitude'] = channel.amplitude
+        params['time'] = channel.time
+        params['time_hold_start'] = channel.time_hold_start
+        params['time_hold_stop'] = channel.time_hold_stop
+        params['time_return'] = channel.time_return
+        params['spacing'] = channel.spacing
+        params['steps'] = channel.steps
+        params['trigger_slope'] = channel.trigger_slope
+        params['trigger_source'] = channel.trigger_source
+        params['trigger_out'] = channel.trigger_out
+
+        return params
 
     def generate_code(self, hdf5_file):
-        TriggerableDevice.generate_code(self, hdf5_file)
+        IntermediateDevice.generate_code(self, hdf5_file)
         group = self.init_device_group(hdf5_file)
-        for channel in [1, 2]:
-            params = np.empty(1, dtype=[('state', bool),
-                                        ('mode', '<S8'),
-                                        ('freq', float),
-                                        ('freq_stop', float),
-                                        ('amplitude', float),
-                                        ('time', float),
-                                        ('time_hold_start', float),
-                                        ('time_hold_stop', float),
-                                        ('time_return', float),
-                                        ('spacing', '<S3'),
-                                        ('steps', int),
-                                        ('trigger_slope', '<S3'),
-                                        ('trigger_source', '<S3'),
-                                        ('trigger_out', '<S3'),
-                                        ])
-            params['state'] = self.channels[channel-1]['state'].static_value
-            params['mode'] = self.channels[channel-1]['mode'].static_value.name
-            params['freq'] = self.channels[channel-1]['freq'].static_value
-            params['freq_stop'] = self.channels[channel-1]['freq_stop'].static_value
-            params['amplitude'] = self.channels[channel-1]['amplitude'].static_value
-            params['time'] = self.channels[channel-1]['time'].static_value
-            params['time_hold_start'] = self.channels[channel-1]['time_hold_start'].static_value
-            params['time_hold_stop'] = self.channels[channel-1]['time_hold_stop'].static_value
-            params['time_return'] = self.channels[channel-1]['time_return'].static_value
-            params['spacing'] = self.channels[channel-1]['spacing'].static_value.name
-            params['steps'] = self.channels[channel-1]['steps'].static_value
-            params['trigger_slope'] = self.channels[channel-1]['trigger_slope'].static_value.name
-            params['trigger_source'] = self.channels[channel-1]['trigger_source'].static_value.name
-            params['trigger_out'] = self.channels[channel-1]['trigger_out'].static_value.name
-            group.create_dataset('channel {:d}'.format(channel), data=params)
+        if self.channel_1:
+            group.create_dataset('channel {:d}'.format(channel),
+                                 data=get_channel_params(self.channel_1))
+        if self.channel_2:
+            group.create_dataset('channel {:d}'.format(channel),
+                                 data=get_channel_params(self.channel_2))

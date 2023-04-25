@@ -384,34 +384,26 @@ class Rigol4162Worker(Worker):
         return remote_values
 
     def program_manual(self, values):
-        print('program_manual')
         for channel in [1, 2]:
-            print(channel)
             key = 'channel {:d}'.format(channel)
             if key in values.keys():
                 if values[key] is None:
                     values[key] = {'state': False}
-            print(key)
             setting = values[key]
-            print(setting)
 
             if not setting['state']:
                 self.rigol.output_off(channel)
                 continue
 
             if setting['mode'] == 'static':
-                print('Setting static')
                 self.rigol.static(channel, setting['freq'], setting['amplitude'])
-                print('Static set')
             elif setting['mode'] == 'sweep':
-                print('Setting sweep')
                 self.rigol.sweep(channel, setting['freq'], setting['freq_stop'],
                                  setting['amplitude'], setting['time'],
                                  setting['time_hold_start'], setting['time_hold_stop'],
                                  setting['time_return'], setting['spacing'],
                                  setting['trigger_slope'], setting['trigger_source'],
                                  setting['trigger_out'], setting['steps'])
-                print('Sweep set')
             else:
                 print('Invalid mode')
 
@@ -445,7 +437,6 @@ class Rigol4162Worker(Worker):
             return {'state': 0}
 
     def transition_to_buffered(self, device_name, h5file, initial_values, fresh):
-        print('transition_to_buffered')
         with h5py.File(h5file, 'r') as hdf5_file:
             group = hdf5_file['/devices/' + device_name]
             values = {}
@@ -457,7 +448,6 @@ class Rigol4162Worker(Worker):
                 values['channel 2'] = self._parse_channel_dataset(group['channel 2'])
             else:
                 values['channel 2'] = {'state': False}
-        print(values)
         self.program_manual(values)
         return {}
 
