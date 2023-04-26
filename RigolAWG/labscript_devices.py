@@ -15,13 +15,13 @@ class RigolDG4162Channel(TriggerableDevice):
         self.channel = channel
         self.state = 0
         self.mode = 'static'
-        self.freq = 0.f
-        self.freq_stop = 0.f
-        self.amplitude = 0.f
-        self.time = 0.f
-        self.time_hold_start = 0.f
-        self.time_hold_stop = 0.f
-        self.time_return = 0.f
+        self.freq = 0.0
+        self.freq_stop = 0.0
+        self.amplitude = 0.0
+        self.time = 0.0
+        self.time_hold_start = 0.0
+        self.time_hold_stop = 0.0
+        self.time_return = 0.0
         self.spacing = 'LIN'
         self.steps = 0
         self.trigger_slope = 'POS'
@@ -107,7 +107,7 @@ class RigolDG4162(IntermediateDevice):
         else:
             self.channel_2 = None
 
-    def get_channel_params(channel):
+    def get_channel_params(self, channel):
         params = np.empty(1, dtype=[('state', bool),
                                     ('mode', '<S8'),
                                     ('freq', float),
@@ -144,8 +144,6 @@ class RigolDG4162(IntermediateDevice):
         IntermediateDevice.generate_code(self, hdf5_file)
         group = self.init_device_group(hdf5_file)
         if self.channel_1:
-            group.create_dataset('channel {:d}'.format(channel),
-                                 data=get_channel_params(self.channel_1))
+            group.create_dataset('channel 1', data=self.get_channel_params(self.channel_1))
         if self.channel_2:
-            group.create_dataset('channel {:d}'.format(channel),
-                                 data=get_channel_params(self.channel_2))
+            group.create_dataset('channel 2', data=self.get_channel_params(self.channel_2))
