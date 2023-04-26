@@ -41,7 +41,7 @@ class RigolDG4162Channel(TriggerableDevice):
         self.setup = True
 
     def sweep_output(self, t, amp, freq_start, freq_stop, ramp_time,
-                     time_hold_start=0, time_hold_stop=0, time_return=0, steps=2048):
+                     time_hold_start=0, time_hold_stop=0, time_return=0, steps=2048, trigger=True):
         if self.setup:
             raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
         self.state = 1
@@ -56,7 +56,8 @@ class RigolDG4162Channel(TriggerableDevice):
         self.time_return = time_return
         self.steps = steps
 
-        self.parent_device.trigger(t, 1e-4)
+        if trigger:
+            self.parent_device.trigger(t, 1e-4)
 
         self.setup = True
 
