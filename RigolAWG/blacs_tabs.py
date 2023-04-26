@@ -9,10 +9,9 @@ from user_devices.RigolAWG.rigol_awg_enums import *
 class Rigol4162Tab(DeviceTab):
     def initialise_GUI(self):
         device = self.settings['connection_table'].find_by_name(self.device_name)
-        properties = device.properties
 
-        self.access_mode = properties.access_mode
-        self.resource_str = properties.resource_str
+        self.access_mode = device.properties['access_mode']
+        self.resource_str = device.properties['resource_str']
 
         self._output_sets = {}
 
