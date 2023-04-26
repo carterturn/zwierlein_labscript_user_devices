@@ -1,0 +1,14 @@
+Code for interfacing with a Rigol DG4162 AWG (and similar models)
+
+The Rigol DG4162 is a two channel function generator featuring both USB TMC and TCPIP interfaces.
+This Labscript interface is designed to program the function generator before a sequence runs.
+Each channel is then independently triggerable.
+
+The labscript_device currently only implements fixed frequencies and linear sweeps,
+but the blacs_tab and blacs_worker support more features, so adding more complex outputs is easy.
+
+See `example_sequence.py` for an example of device use.
+The two channels are created as child devices,
+with a channel automatically created when a trigger is supplied.
+Without a trigger, the channel will not be created, so even for purely static channels,
+a dummy trigger is required.
