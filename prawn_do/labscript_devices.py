@@ -29,5 +29,3 @@ class PrawnDO(IntermediateDevice):
 
         group = hdf5_file['devices'].require_group(self.name)
         group.create_dataset('do_data', data=do_table)
-
-    
