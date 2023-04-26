@@ -1,0 +1,7 @@
+Code for interfacing with an AD9914 via a Raspberry Pi Pico.
+See (TODO: insert link) for the Pi Pico code.
+
+The AD9914 is a DDS operating at up to 3.5GHz. The Pi Pico uses PIO to interface with it with predictable latency (should have <100ns jitter).
+The Pi Pico code currently only supports linear ramps between a pair of frequencies and amplitudes. These ramps are updated with high frequency (~1MHz). Up to 8192 ramps per sequence are supported, thus making the approximation of more complex functions (e.g. exponential ramps) with fairly high resolution feasible.
+
+The Pi Pico is programmed over human-readable serial (currently, no checksums are implemented), then triggered externally. The serial transfer is implemented in blacs_worker.py. The expansion of complex ramps to linear ramps is implemented in labscript_devices.py. Expansion of ramps currently uses a simple linear timebase (TODO: use more accurate timebase scheme). The blacs tab is a simple DDS.
