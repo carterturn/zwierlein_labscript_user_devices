@@ -37,19 +37,22 @@ class VirtualDeviceTab(Tab):
 
     def create_do_widgets(self, digital_channels):
         self.do_widgets = {}
-        for device_name, connection_name, name in digital_channels:
-            full_conn_name = '%s.%s' % (device_name, connection_name)
-            self.do_widgets[full_conn_name] =  DigitalOutput('%s\n%s' % (name, full_conn_name))
-            self.do_widgets[full_conn_name].last_DO = None
-            self.do_widgets[full_conn_name].closing = False
+        for device_name, connection_name, name, inverted in digital_channels:
+            full_name = '%s.%s' % (device_name, connection_name)
+            if not inverted:
+                self.do_widgets[full_name] = DigitalOutput('%s\n%s' % (name, full_conn_name))
+            else:
+                self.do_widgets[full_name] = InvertedDigitalOutput('%s\n%s' % (name, full_conn_name))
+            self.do_widgets[full_name].last_DO = None
+            self.do_widgets[full_name].closing = False
 
     def create_ao_widgets(self, analog_channels):
         self.ao_widgets = {}
         for device_name, connection_name, name in analog_channels:
-            full_conn_name = '%s.%s' % (device_name, connection_name)
-            self.ao_widgets[full_conn_name] =  AnalogOutput(name, connection_name=full_conn_name)
-            self.ao_widgets[full_conn_name].last_AO = None
-            self.ao_widgets[full_conn_name].closing = False
+            full_name = '%s.%s' % (device_name, connection_name)
+            self.ao_widgets[full_name] =  AnalogOutput(name, connection_name=full_name)
+            self.ao_widgets[full_name].last_AO = None
+            self.ao_widgets[full_name].closing = False
 
     # Boilerplate functions, do nothing, do it fast
     def transition_to_buffered(self, h5file, notify_queue):

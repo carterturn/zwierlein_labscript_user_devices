@@ -2,8 +2,14 @@ from labscript import IntermediateDevice, compiler, set_passed_properties
 
 import numpy as np
 
-def serialize_output_list(output_list):
-    if output_list:
+def serialize_digital_output_list(digital_output_list):
+    if digital_output_list:
+        return [(c.parent_device.name, c.connection, c.name, c.inverted) for c in output_list]
+    else:
+        return []
+
+def serialize_analog_output_list(analog_output_list):
+    if analog_output_list:
         return [(c.parent_device.name, c.connection, c.name) for c in output_list]
     else:
         return []
@@ -23,8 +29,8 @@ class VirtualDevice(IntermediateDevice):
         IntermediateDevice.__init__(self, name, parent_device)
         self.BLACS_connection = 'Virtual: {}'.format(name)
 
-        self.analog_channels = serialize_output_list(analog_channels)
-        self.digital_channels = serialize_output_list(digital_channels)
+        self.analog_channels = serialize_analog_output_list(analog_channels)
+        self.digital_channels = serialize_digital_output_list(digital_channels)
 
     def generate_code(self, hdf5_file):
         # Ensure that no code is generated.
