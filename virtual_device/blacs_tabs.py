@@ -40,9 +40,9 @@ class VirtualDeviceTab(Tab):
         for device_name, connection_name, name, inverted in digital_channels:
             full_name = '%s.%s' % (device_name, connection_name)
             if not inverted:
-                self.do_widgets[full_name] = DigitalOutput('%s\n%s' % (name, full_conn_name))
+                self.do_widgets[full_name] = DigitalOutput('%s\n%s' % (name, full_name))
             else:
-                self.do_widgets[full_name] = InvertedDigitalOutput('%s\n%s' % (name, full_conn_name))
+                self.do_widgets[full_name] = InvertedDigitalOutput('%s\n%s' % (name, full_name))
             self.do_widgets[full_name].last_DO = None
             self.do_widgets[full_name].closing = False
 
