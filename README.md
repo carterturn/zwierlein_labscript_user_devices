@@ -21,3 +21,19 @@ An enable or gate digital line is not currently integrated into the device,
 and may be provided by an additional digital output.
 
 The Pi Pico code is available at <https://github.mit.edu/Zwierleingroup/pico_ad9914>.
+
+Rigol AWG
+---------
+
+`RigolAWG` provides a labscript interface to the Rigol DG4162 AWG (and similar models).
+
+Tested so far with
+-Rigol DG4162
+-Rigol DG4102
+
+PrawnDO
+-------
+
+`PrawnDO` is a cheap way to have 16 buffered (in the sequence sense) digital outputs using a Raspberry Pi Pico running custom software.
+
+The Pi Pico code is available at <https://github.mit.edu/Zwierleingroup/prawn_do>.
