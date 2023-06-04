@@ -34,7 +34,6 @@ class AlliedVisionCamera(object):
 
     def get_attribute(self, name):
         with Vimba.get_instance(), self.camera:
-            print(name)
             return str(self.camera.get_feature_by_name(name).get())
 
     def snap(self):
@@ -56,10 +55,11 @@ class AlliedVisionCamera(object):
 
         print(f"Acquiring from camera {n_images} images.")
         with Vimba.get_instance(), self.camera:
-            for image_number in range(n_images):
-                frame = self.camera.get_frame(60*60*1000)
+            image_number = 0
+            for frame in self.camera.get_frame_generator(limit=n_images, timeout_ms=60*60*1000):
                 image = self._decode_image_data(frame)
                 print(f"    {image_number}: Acquire complete")
+                image_number += 1
                 images.append(image)
 
     def stop_acquisition(self):
