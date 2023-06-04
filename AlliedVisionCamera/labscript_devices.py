@@ -1,3 +1,5 @@
+from labscript import TriggerableDevice, set_passed_properties
+
 from labscript_devices.IMAQdxCamera.labscript_devices import IMAQdxCamera
 
 class AlliedVisionCamera(IMAQdxCamera):
