@@ -11,9 +11,12 @@ class AlliedVisionCamera(object):
 
         with Vimba.get_instance() as vimba:
             try:
-                self.camera = vimba.get_camera_by_id('DEV_' + hex(serial_number)[2:].upper())
+                self.camera = vimba.get_camera_by_id('DEV_' + hex(serial_number).upper())
             except VimbaCameraError as e:
-                raise RuntimeError('Failed to open camera {}'.format(serial_number), e)
+                try:
+                    self.camera = vimba.get_camera_by_id('DEV_' + hex(serial_number)[2:].upper())
+                except VimbaCameraError as e:
+                    raise RuntimeError('Failed to open camera {}'.format(serial_number), e)
         if self.camera is None:
             raise RuntimeError('Unable to get instance of Vimba')
 
