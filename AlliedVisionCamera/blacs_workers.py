@@ -27,21 +27,25 @@ class AlliedVisionCamera(object):
 
     def set_attribute(self, name, value):
         with Vimba.get_instance(), self.camera:
+            print('get_feature_by_name(name).set(value)')
             self.camera.get_feature_by_name(name).set(value)
 
     def get_attribute_names(self, visibility_level, writeable_only=True):
         from vimba.feature import CommandFeature
         with Vimba.get_instance(), self.camera:
+            print('self.camera.get_all_features()')
             return [f.get_name() for f in self.camera.get_all_features()
                     if (1 in f.get_flags()) and (2 in f.get_flags())]
 
     def get_attribute(self, name):
         with Vimba.get_instance(), self.camera:
+            print('get_feature_by_name(name).get()')
             return str(self.camera.get_feature_by_name(name).get())
 
     def snap(self):
         '''Acquire a single image and return it'''
         with Vimba.get_instance(), self.camera:
+            print('get_frame()')
             frame = self.camera.get_frame()
         return self._decode_image_data(frame)
 
@@ -59,6 +63,7 @@ class AlliedVisionCamera(object):
         print(f"Acquiring from camera {n_images} images.")
         with Vimba.get_instance(), self.camera:
             image_number = 0
+            print('get_frame_generator(limit=n_images, timeout_ms=60*60*1000):')
             for frame in self.camera.get_frame_generator(limit=n_images, timeout_ms=60*60*1000):
                 image = self._decode_image_data(frame)
                 print(f"    {image_number}: Acquire complete")
