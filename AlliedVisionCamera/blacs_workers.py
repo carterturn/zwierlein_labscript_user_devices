@@ -21,6 +21,8 @@ class AlliedVisionCamera(object):
             raise RuntimeError('Unable to get instance of Vimba')
 
     def set_attributes(self, attr_dict):
+        if len(attr_dict) == 0: # No need to acquire Vimba instance for empty dict
+            return
         with Vimba.get_instance(), self.camera:
             for k, v in attr_dict.items():
                 print('get_feature_by_name({}).set({})'.format(k, v))
