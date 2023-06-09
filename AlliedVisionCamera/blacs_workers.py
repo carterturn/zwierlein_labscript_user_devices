@@ -23,6 +23,7 @@ class AlliedVisionCamera(object):
     def set_attributes(self, attr_dict):
         with Vimba.get_instance(), self.camera:
             for k, v in attr_dict.items():
+                print('get_feature_by_name({}).set({})'.format(k, v))
                 self.camera.get_feature_by_name(k).set(v)
 
     def set_attribute(self, name, value):
@@ -43,19 +44,18 @@ class AlliedVisionCamera(object):
             return str(self.camera.get_feature_by_name(name).get())
 
     def snap(self):
+        '''Acquire a single image in manual mode and return it'''
+        return self.grab()
+
+    def configure_acquisition(self, continuous=True, bufferCount=None):
+        pass
+
+    def grab(self):
         '''Acquire a single image and return it'''
         with Vimba.get_instance(), self.camera:
             print('get_frame()')
             frame = self.camera.get_frame()
         return self._decode_image_data(frame)
-
-    def configure_acquisition(self, continuous=False, bufferCount=None):
-        pass
-
-    def grab(self):
-        '''Grab last/single image.
-        Currently just calls snap.'''
-        return self.snap()
 
     def grab_multiple(self, n_images, images, waitForNextBuffer=True):
         '''Grab n_images into images array during buffered acquistion.'''
@@ -86,4 +86,19 @@ class AlliedVisionCamera(object):
 class AlliedVisionCameraWorker(IMAQdxCameraWorker):
     # N.B. We use the camera server architecture from IMAQdxCamera,
     # but the interface is entirely based on the Allied Vision API.
-    interface_class = AlliedVisionCamera
+    def get_camera(self):
+        # Allied Vision firewire cameras do not reliably set attributes,
+        # so we will hide the manual mode attributes and only apply them
+        # when actually using the camera in manual mode.
+        self._manual_mode_attributes = self.manual_mode_camera_attributes
+        self.manual_mode_camera_attributes = self.camera_attributes
+
+        return AlliedVisionCamera(self.serial_number)
+
+    def snap(self):
+        self.set_attributes_smart(self._manual_mode_attributes)
+        super().snap()
+
+    def start_continuous(self, dt):
+        self.set_attributes_smart(self._manual_mode_attributes)
+        super().start_continuous(dt)
