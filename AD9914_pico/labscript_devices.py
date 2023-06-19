@@ -1,6 +1,7 @@
-from labscript import TriggerableDevice, IntermediateDevice, set_passed_properties
+from labscript import TriggerableDevice, IntermediateDevice, set_passed_properties, LabscriptError
 
 import numpy as np
+import sys
 
 class AD9914Pico(TriggerableDevice):
 
@@ -23,6 +24,18 @@ class AD9914Pico(TriggerableDevice):
         TriggerableDevice.generate_code(self, hdf5_file)
 
         self.command_list.sort(key=lambda cl: cl['t'])
+
+        # Check for overlapping ramps
+        for cl in self.command_list:
+            t_start = cl['t']
+            if cl['sweep']:
+                t_end = cl['t'] + cl['sweep_time']
+            else:
+                t_end = cl['t'] + 2e-6
+            for cl_ in self.command_list:
+                if cl_['t'] > t_start and cl_['t'] < t_end:
+                    raise LabscriptError('%s requires trigger at %s, overlapping with a ramp from t = %s to %s' % (self.name, str(cl_['t']), str(t_start), str(t_end)))
+
         command_array = np.empty(len(self.command_list),
                                  dtype=[('start freq', float),
                                         ('start amp', float),
@@ -32,6 +45,24 @@ class AD9914Pico(TriggerableDevice):
                                         ('sweep time', float),
                                         ('trigger', bool)])
         for cl, ca in zip(self.command_list, command_array):
+            # Bound amplitude to avoid unexpected results
+            if cl['start_amp'] < 0:
+                cl['start_amp'] = 0
+                sys.stderror.write('WARNING: %s has a command with start_amp < 0 at time %s. Bounding to 0.'
+                                   % (self.name, str(cl['t'])))
+            if cl['start_amp'] > 1:
+                cl['start_amp'] = 1
+                sys.stderror.write('WARNING: %s has a command with start_amp > 1 at time %s. Bounding to 1.'
+                                   % (self.name, str(cl['t'])))
+            if cl['stop_amp'] < 0:
+                cl['stop_amp'] = 0
+                sys.stderror.write('WARNING: %s has a command with stop_amp < 0 at time %s. Bounding to 0.'
+                                   % (self.name, str(cl['t'])))
+            if cl['stop_amp'] > 1:
+                cl['stop_amp'] = 1
+                sys.stderror.write('WARNING: %s has a command with stop_amp > 1 at time %s. Bounding to 1.'
+                                   % (self.name, str(cl['t'])))
+
             ca['start freq'] = cl['start_freq']
             ca['stop freq'] = cl['stop_freq']
             ca['start amp'] = cl['start_amp']
