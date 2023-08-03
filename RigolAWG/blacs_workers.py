@@ -247,7 +247,7 @@ class _RigolDG4162InterfaceChannel(object):
         return self.io.query(':SOUR{}:MOD:FM:INT:FUNC?'.format(self.channel))
 
     def fm_mod(self, carrier_freq, mod_freq, amplitude, mod_amp, mod_shape, fresh):
-        if self.mode != 'sweep' or not fresh:
+        if self.mode != 'fm_mod' or not fresh:
             self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
             self.io.write(':SOUR{}:SWE:STAT OFF'.format(self.channel))
