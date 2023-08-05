@@ -61,8 +61,8 @@ class GlassPlateRotatorWorker(Worker):
             positions = group['rotator_data']
 
             self.program_rotator(['motion' for c in self.channel_names],
-                                 [positions[c][0] for c in self.channel_names],
-                                 [positions[c][1] for c in self.channel_names])
+                                 [positions['{} upper'.format(c)] for c in self.channel_names],
+                                 [positions['{} lower'.format(c)] for c in self.channel_names])
 
         return {}
 
