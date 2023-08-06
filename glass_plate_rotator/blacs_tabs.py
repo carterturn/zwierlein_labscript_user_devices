@@ -27,7 +27,7 @@ class GlassPlateRotatorTab(DeviceTab):
             outputs['pos_upper'] = AO('pos_upper', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'deg', angle_min, angle_max, 1, 0)
-            outputs['pos_lower'] = AO('pos_upper', device.name, self.device_name,
+            outputs['pos_lower'] = AO('pos_lower', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'deg', angle_min, angle_max, 1, 0)
             widgets = {}

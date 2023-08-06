@@ -7,6 +7,12 @@ class GlassPlateRotatorWorker(Worker):
         self.conn = serial.Serial(self.com_port, baudrate=9600, timeout=0.1)
 
     def program_rotator(self, modes, positions_0, positions_1):
+        # Apply inversions
+        if self.inverted is not None:
+            positions_0 = [p if not i else -p for p, i in zip(positions_0, self.inverted)]
+            positions_1 = [p if not i else -p for p, i in zip(positions_1, self.inverted)]
+
+        # Set mode for each channel
         mode_set_msg = '<'
         for i, mode in enumerate(modes):
             mode_set_msg += 'CH{}MODE:'.format(i)
@@ -21,6 +27,7 @@ class GlassPlateRotatorWorker(Worker):
         mode_set_msg += '>'
         self.conn.write(mode_set_msg.encode())
 
+        # Set position zero (TTL low) for each channel
         set_0_msg = '<'
         for i, position_0 in enumerate(positions_0):
             set_0_msg += 'CH{}POS0:'.format(i)
@@ -30,6 +37,7 @@ class GlassPlateRotatorWorker(Worker):
         set_0_msg += '>'
         self.conn.write(set_0_msg.encode())
 
+        # Set position one (TTL high) for each channel
         set_1_msg = '<'
         for i, position_1 in enumerate(positions_1):
             set_1_msg += 'CH{}POS1:'.format(i)

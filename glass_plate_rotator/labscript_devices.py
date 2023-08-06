@@ -9,13 +9,15 @@ class GlassPlateRotator(Device):
             'connection_table_properties': [
                 'com_port',
                 'channel_names',
+                'inverted',
                 'angle_min',
                 'angle_max',
             ]
         }
     )
 
-    def __init__(self, name, com_port, channel_names, angle_min=-60, angle_max=60, **kwargs):
+    def __init__(self, name, com_port, channel_names, inverted=None,
+                 angle_min=-60, angle_max=60, **kwargs):
         Device.__init__(self, name, None, connection=com_port)
         self.BLACS_connection = 'Glass Plate Rotator: {}'.format(name)
         self.positions = {}
