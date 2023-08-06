@@ -78,7 +78,6 @@ class GlassPlateRotatorWorker(Worker):
         return True
 
     def abort_buffered(self):
-        self.intf.abort()
         return True
 
     def abort_transition_to_buffered(self):
