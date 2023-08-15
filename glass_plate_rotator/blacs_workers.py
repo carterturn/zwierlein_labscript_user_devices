@@ -27,6 +27,12 @@ class GlassPlateRotatorWorker(Worker):
         mode_set_msg += '>'
         self.conn.write(mode_set_msg.encode())
 
+        # Check response
+        resp = self.conn.readline().decode()
+        if resp.strip() != msg:
+            raise RuntimeError('Communication error with glassplate.\n\tSent: {}\n\tRecv: {}'
+                               .format(msg, resp))
+
         # Set position zero (TTL low) for each channel
         set_0_msg = '<'
         for i, position_0 in enumerate(positions_0):
@@ -36,6 +42,12 @@ class GlassPlateRotatorWorker(Worker):
         set_0_msg = set_0_msg[:-1]
         set_0_msg += '>'
         self.conn.write(set_0_msg.encode())
+
+        # Check response
+        resp = self.conn.readline().decode()
+        if resp.strip() != msg:
+            raise RuntimeError('Communication error with glassplate.\n\tSent: {}\n\tRecv: {}'
+                               .format(msg, resp))
 
         # Set position one (TTL high) for each channel
         set_1_msg = '<'
@@ -47,9 +59,11 @@ class GlassPlateRotatorWorker(Worker):
         set_1_msg += '>'
         self.conn.write(set_1_msg.encode())
 
-        # Flush input buffer
-        while self.conn.in_waiting > 0:
-            self.conn.read()
+        # Check response
+        resp = self.conn.readline().decode()
+        if resp.strip() != msg:
+            raise RuntimeError('Communication error with glassplate.\n\tSent: {}\n\tRecv: {}'
+                               .format(msg, resp))
 
     def program_manual(self, values):
         modes = []
