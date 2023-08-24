@@ -103,24 +103,24 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_static_freq(self):
-        return self.io.query(':SOUR{}:FREQ?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ?'.format(self.channel))
 
     def get_static_amplitude(self):
-        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:VOLT?'.format(self.channel))
 
     def static(self, freq, amplitude, fresh):
         if self.mode != 'static' or not fresh:
-            self.io.write(':SOUR{}:SWE:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
             self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
-            self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
+            self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
             fresh = False
 
         if self.freq != freq or not fresh:
-            self.io.write(':SOUR{}:FREQ {}'.format(self.channel, freq))
+            self.io.write(':SOUR{:d}:FREQ {}'.format(self.channel, freq))
         if self.amplitude != amplitude or not fresh:
-            self.io.write(':SOUR{}:VOLT:UNIT DBM'.format(self.channel))
-            self.io.write(':SOUR{}:VOLT {}'.format(self.channel, amplitude))
-            self.io.write(':SOUR{}:VOLT:OFFS 0'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT:UNIT DBM'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT {}'.format(self.channel, amplitude))
+            self.io.write(':SOUR{:d}:VOLT:OFFS 0'.format(self.channel))
 
         self._clear_sweep()
         self.mode = 'static'
@@ -130,40 +130,40 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_sweep_freq_start(self):
-        return self.io.query(':SOUR{}:FREQ:STAR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ:STAR?'.format(self.channel))
 
     def get_sweep_freq_stop(self):
-        return self.io.query(':SOUR{}:FREQ:STOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ:STOP?'.format(self.channel))
 
     def get_sweep_amplitude(self):
-        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:VOLT?'.format(self.channel))
 
     def get_sweep_time(self):
-        return self.io.query(':SOUR{}:SWE:TIME?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TIME?'.format(self.channel))
 
     def get_sweep_time_hold_start(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:STAR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:STAR?'.format(self.channel))
 
     def get_sweep_time_hold_stop(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:STOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:STOP?'.format(self.channel))
 
     def get_sweep_time_return(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:RTIM?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:RTIM?'.format(self.channel))
 
     def get_sweep_spacing(self):
-        return self.io.query(':SOUR{}:SWE:SPAC?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:SPAC?'.format(self.channel))
 
     def get_sweep_trigger_slope(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:SLOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:SLOP?'.format(self.channel))
 
     def get_sweep_trigger_source(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:SOUR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:SOUR?'.format(self.channel))
 
     def get_sweep_trigger_out(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:TRIGO?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:TRIGO?'.format(self.channel))
 
     def get_sweep_steps(self):
-        return self.io.query(':SOUR{}:SWE:STEP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:STEP?'.format(self.channel))
 
     def sweep(self, freq_start, freq_stop, amplitude,
               time, time_hold_start, time_hold_stop, time_return, spacing,
@@ -188,38 +188,38 @@ class _RigolDG4162InterfaceChannel(object):
 
         if self.mode != 'sweep' or not fresh:
             self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
-            self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
-            self.io.write(':SOUR{}:SWE:STAT ON'.format(self.channel))
+            self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT ON'.format(self.channel))
             fresh = False
         if self.freq_start != freq_start or not fresh:
-            self.io.write(':SOUR{}:FREQ:STAR {}'.format(self.channel, freq_start))
+            self.io.write(':SOUR{:d}:FREQ:STAR {}'.format(self.channel, freq_start))
         if self.freq_stop != freq_stop or not fresh:
-            self.io.write(':SOUR{}:FREQ:STOP {}'.format(self.channel, freq_stop))
+            self.io.write(':SOUR{:d}:FREQ:STOP {}'.format(self.channel, freq_stop))
         if self.amplitude != amplitude or not fresh:
-            self.io.write(':SOUR{}:VOLT:UNIT DBM'.format(self.channel))
-            self.io.write(':SOUR{}:VOLT {}'.format(self.channel, amplitude))
-            self.io.write(':SOUR{}:VOLT:OFFS 0'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT:UNIT DBM'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT {}'.format(self.channel, amplitude))
+            self.io.write(':SOUR{:d}:VOLT:OFFS 0'.format(self.channel))
         if self.time_hold_start != time_hold_start or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:STAR {}'.format(self.channel, time_hold_start))
+            self.io.write(':SOUR{:d}:SWE:HTIM:STAR {}'.format(self.channel, time_hold_start))
         if self.time_hold_stop != time_hold_stop or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:STOP {}'.format(self.channel, time_hold_stop))
+            self.io.write(':SOUR{:d}:SWE:HTIM:STOP {}'.format(self.channel, time_hold_stop))
         if self.time_return != time_return or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:RTIM {}'.format(self.channel, time_return))
+            self.io.write(':SOUR{:d}:SWE:HTIM:RTIM {}'.format(self.channel, time_return))
         if self.spacing != spacing or not fresh:
-            self.io.write(':SOUR{}:SWE:SPAC '.format(self.channel) + spacing)
+            self.io.write(':SOUR{:d}:SWE:SPAC '.format(self.channel) + spacing)
         if spacing == 'STE' and (self.steps != steps or not fresh):
-            self.io.write(':SOUR{}:SWE:STEP {}'.format(self.channel, steps))
+            self.io.write(':SOUR{:d}:SWE:STEP {}'.format(self.channel, steps))
         if self.time != time or not fresh:
-            self.io.write(':SOUR{}:SWE:TIME {}'.format(self.channel, time))
+            self.io.write(':SOUR{:d}:SWE:TIME {}'.format(self.channel, time))
         if self.trigger_slope != trigger_slope or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:SLOP '.format(self.channel) + trigger_slope)
+            self.io.write(':SOUR{:d}:SWE:TRIG:SLOP '.format(self.channel) + trigger_slope)
         if self.trigger_source != trigger_source or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:SOUR '.format(self.channel) + trigger_source)
+            self.io.write(':SOUR{:d}:SWE:TRIG:SOUR '.format(self.channel) + trigger_source)
         if self.trigger_out != trigger_out or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:TRIGO '.format(self.channel) + trigger_out)
+            self.io.write(':SOUR{:d}:SWE:TRIG:TRIGO '.format(self.channel) + trigger_out)
 
         if trigger_source == 'MAN': # Trigger manual sweep now
-            self.io.write(':SOUR{}:SWE:TRIG:IMM'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:TRIG:IMM'.format(self.channel))
 
         self._clear_static()
         self.mode = 'sweep'
