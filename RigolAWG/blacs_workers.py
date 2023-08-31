@@ -110,8 +110,13 @@ class _RigolDG4162InterfaceChannel(object):
 
     def static(self, freq, amplitude, fresh):
         if self.mode != 'static' or not fresh:
+            # First attempt to disable sweep just changes front panel, need to send twice
             self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            # First attempt to disable FM mod just changes front panel, need to send twice
             self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+
             self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
             fresh = False
@@ -190,7 +195,10 @@ class _RigolDG4162InterfaceChannel(object):
         if self.mode != 'sweep' or not fresh:
             self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
+            # First attempt to disable FM mod just changes front panel, need to send twice
             self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+
             self.io.write(':SOUR{:d}:SWE:STAT ON'.format(self.channel))
             fresh = False
         if self.freq != freq_start or not fresh:
@@ -253,7 +261,10 @@ class _RigolDG4162InterfaceChannel(object):
         if self.mode != 'fm_mod' or not fresh:
             self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
+            # First attempt to disable sweep just changes front panel, need to send twice
             self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+
             self.io.write(':SOUR{:d}:MOD:STAT ON'.format(self.channel))
             self.io.write(':SOUR{:d}:MOD:TYP FM'.format(self.channel))
             self.io.write(':SOUR{:d}:MOD:FM:SOUR INT'.format(self.channel))
