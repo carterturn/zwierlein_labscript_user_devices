@@ -60,6 +60,9 @@ class Rigol4162Tab(DeviceTab):
             outputs['mod_amp'] = AO('mod_amp', device.name, self.device_name,
                                     self.program_device, self.settings,
                                     None, None, 'Hz', 0, 1e10, 1e3, 5)
+            outputs['mod_source'] = EO('mod_source', device.name, self.device_name,
+                                       self.program_device, self.settings,
+                                       RigolDG4162EnumModSource)
             outputs['mod_shape'] = EO('mod_shape', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       RigolDG4162EnumModShape)

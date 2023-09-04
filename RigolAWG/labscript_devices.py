@@ -28,6 +28,7 @@ class RigolDG4162Channel(TriggerableDevice):
         self.trigger_slope = 'POS'
         self.trigger_source = 'EXT'
         self.trigger_out = 'OFF'
+        self.mod_source = 'INT'
         self.mod_shape = 'SIN'
 
         self.setup = False
@@ -63,7 +64,7 @@ class RigolDG4162Channel(TriggerableDevice):
 
         self.setup = True
 
-    def fm_mod_output(self, t, amp, carrier_freq, mod_freq, mod_amp, shape='SIN'):
+    def fm_mod_output(self, t, amp, carrier_freq, mod_freq, mod_amp, mod_source='INT', shape='SIN'):
         if self.setup:
             raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
         self.state = 1
@@ -71,6 +72,7 @@ class RigolDG4162Channel(TriggerableDevice):
         self.freq = carrier_freq
         self.freq_2 = mod_freq
         self.mod_amp = mod_amp
+        self.mod_source = mod_source
         self.mod_shape = shape
 
         self.setup = True
@@ -138,6 +140,7 @@ class RigolDG4162(IntermediateDevice):
                                     ('trigger_slope', '<S3'),
                                     ('trigger_source', '<S3'),
                                     ('trigger_out', '<S3'),
+                                    ('mod_source', '<S5'),
                                     ('mod_shape', '<S5'),
                                     ])
         params['state'] = channel.state
@@ -155,6 +158,7 @@ class RigolDG4162(IntermediateDevice):
         params['trigger_slope'] = channel.trigger_slope
         params['trigger_source'] = channel.trigger_source
         params['trigger_out'] = channel.trigger_out
+        params['mod_source'] = channel.mod_source
         params['mod_shape'] = channel.mod_shape
 
         return params

@@ -82,6 +82,7 @@ class _RigolDG4162InterfaceChannel(object):
 
         # FM mod variables
         self.mod_amp = None
+        self.mod_source = None
         self.mod_shape = None
 
         return
@@ -254,10 +255,13 @@ class _RigolDG4162InterfaceChannel(object):
     def get_fm_mod_mod_amp(self):
         return self.io.query(':SOUR{:d}:MOD:FM:DEV?'.format(self.channel))
 
+    def get_fm_mod_mod_source(self):
+        return self.io.query(':SOUR{:d}:MOD:FM:SOUR?'.format(self.channel))
+
     def get_fm_mod_mod_shape(self):
         return self.io.query(':SOUR{:d}:MOD:FM:INT:FUNC?'.format(self.channel))
 
-    def fm_mod(self, carrier_freq, mod_freq, amplitude, mod_amp, mod_shape, fresh):
+    def fm_mod(self, carrier_freq, mod_freq, amplitude, mod_amp, mod_source, mod_shape, fresh):
         if self.mode != 'fm_mod' or not fresh:
             self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
             self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
@@ -267,8 +271,9 @@ class _RigolDG4162InterfaceChannel(object):
 
             self.io.write(':SOUR{:d}:MOD:STAT ON'.format(self.channel))
             self.io.write(':SOUR{:d}:MOD:TYP FM'.format(self.channel))
-            self.io.write(':SOUR{:d}:MOD:FM:SOUR INT'.format(self.channel))
             fresh = False
+        if self.mod_source != mod_source or not fresh:
+            self.io.write(':SOUR{:d}:MOD:FM:SOUR {}'.format(self.channel, mod_source))
         if self.freq != carrier_freq or not fresh:
             self.io.write(':SOUR{:d}:FREQ {}'.format(self.channel, carrier_freq))
         if self.amplitude != amplitude or not fresh:
@@ -279,7 +284,7 @@ class _RigolDG4162InterfaceChannel(object):
             self.io.write(':SOUR{:d}:MOD:FM:INT:FREQ {}'.format(self.channel, mod_freq))
         if self.mod_amp != mod_amp or not fresh:
             self.io.write(':SOUR{:d}:MOD:FM:DEV {}'.format(self.channel, mod_amp))
-        if self.mod_shape != mod_shape or not fresh:
+        if mod_source == 'INT' and (self.mod_shape != mod_shape or not fresh):
             self.io.write(':SOUR{:d}:MOD:FM:INT:FUNC {}'.format(self.channel, mod_shape))
 
         self._clear()
@@ -288,6 +293,7 @@ class _RigolDG4162InterfaceChannel(object):
         self.freq_2 = mod_freq
         self.amplitude = amplitude
         self.mod_amp = mod_amp
+        self.mod_source = mod_source
         self.mod_shape = mod_shape
 
         return
@@ -397,14 +403,19 @@ class RigolDG4162Interface(object):
         assert channel in [1, 2], 'channel should be 1 or 2'
         return self.channels[channel-1].get_fm_mod_mod_amp()
 
+    def get_fm_mod_mod_source(self, channel):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].get_fm_mod_mod_source()
+
     def get_fm_mod_mod_shape(self, channel):
         assert channel in [1, 2], 'channel should be 1 or 2'
         return self.channels[channel-1].get_fm_mod_mod_shape()
 
-    def fm_mod(self, channel, carrier_freq, mod_freq, amplitude, mod_amp, mod_shape, fresh=False):
+    def fm_mod(self, channel, carrier_freq, mod_freq, amplitude,
+               mod_amp, mod_source, mod_shape, fresh=False):
         assert channel in [1, 2], 'channel should be 1 or 2'
         return self.channels[channel-1].fm_mod(carrier_freq, mod_freq, amplitude, mod_amp,
-                                               mod_shape, fresh)
+                                               mod_source, mod_shape, fresh)
 
     def write(self, command):
         return self.io.write(command)
@@ -455,6 +466,7 @@ class Rigol4162Worker(Worker):
                       'freq_2': self.rigol.get_fm_mod_mod_freq(channel),
                       'amplitude': self.rigol.get_static_amplitude(channel),
                       'mod_amp': self.rigol.get_fm_mod_mod_amp(channel),
+                      'mod_source': self.rigol.get_fm_mod_mod_source(channel),
                       'mod_shape': self.rigol.get_fm_mod_mod_shape(channel)}
                 remote_values['channel {:d}'.format(channel)] = cv
             else:
@@ -485,7 +497,8 @@ class Rigol4162Worker(Worker):
                                  setting['trigger_out'], setting['steps'])
             elif setting['mode'] == 'fm_mod':
                 self.rigol.fm_mod(channel, setting['freq'], setting['freq_2'],
-                                  setting['amplitude'], setting['mod_amp'], setting['mod_shape'])
+                                  setting['amplitude'], setting['mod_amp'],
+                                  setting['mod_source'], setting['mod_shape'])
             else:
                 print('Invalid mode')
 
@@ -521,6 +534,7 @@ class Rigol4162Worker(Worker):
                     'freq_2': dataset['freq_2'][0],
                     'amplitude': dataset['amplitude'][0],
                     'mod_amp': dataset['mod_amp'][0],
+                    'mod_source': dataset['mod_source'][0],
                     'mod_shape': dataset['mod_shape'][0]}
         else:
             return {'state': 0}
