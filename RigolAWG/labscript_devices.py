@@ -64,7 +64,7 @@ class RigolDG4162Channel(TriggerableDevice):
 
         self.setup = True
 
-    def fm_mod_output(self, t, amp, carrier_freq, mod_freq, mod_amp, mod_source='INT', shape='SIN'):
+    def fm_mod_output(self, amp, carrier_freq, mod_freq, mod_amp, mod_source='INT', mod_shape='SIN'):
         if self.setup:
             raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
         self.state = 1
@@ -73,7 +73,7 @@ class RigolDG4162Channel(TriggerableDevice):
         self.freq_2 = mod_freq
         self.mod_amp = mod_amp
         self.mod_source = mod_source
-        self.mod_shape = shape
+        self.mod_shape = mod_shape
 
         self.setup = True
 
