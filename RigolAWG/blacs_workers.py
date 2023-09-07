@@ -538,8 +538,8 @@ class Rigol4162Worker(Worker):
                     'freq_2': dataset['freq_2'][0],
                     'amplitude': dataset['amplitude'][0],
                     'mod_amp': dataset['mod_amp'][0],
-                    'mod_source': dataset['mod_source'][0],
-                    'mod_shape': dataset['mod_shape'][0]}
+                    'mod_source': dataset['mod_source'][0].decode(),
+                    'mod_shape': dataset['mod_shape'][0].decode()}
         else:
             return {'state': 0}
 
