@@ -69,6 +69,7 @@ class RigolDG4162Channel(TriggerableDevice):
             raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
         self.state = 1
         self.mode = 'fm_mod'
+        self.amplitude = amp
         self.freq = carrier_freq
         self.freq_2 = mod_freq
         self.mod_amp = mod_amp
