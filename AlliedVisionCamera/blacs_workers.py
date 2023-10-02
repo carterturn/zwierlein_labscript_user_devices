@@ -5,6 +5,7 @@ import labscript_utils.h5_lock
 import h5py
 import labscript_utils.properties
 import zmq
+import os
 
 from labscript_utils.ls_zprocess import Context
 
@@ -22,6 +23,12 @@ class AlliedVisionCameraWorker(Worker):
     def init(self):
         global Vimba
         from vimba import Vimba, VimbaCameraError
+
+        if self.legacy_save_folder is not None:
+            global fits
+            from astropy.io import fits
+            global datetime
+            import datetime
 
         self.camera = None
 
@@ -242,6 +249,10 @@ class AlliedVisionCameraWorker(Worker):
             print("Cannot display images in the GUI, they are not all the same shape")
         else:
             self._send_image_to_parent(image_block)
+
+        if self.legacy_save_folder is not None:
+            filename = datetime.datetime.now().strftime('%Y-%m-%d-%H;%M;%S') + '.fits'
+            fits.PrimaryHDU(self.images).writeto(os.path.join(self.legacy_save_folder, filename))
 
         self.images = None
         self.n_images = None
