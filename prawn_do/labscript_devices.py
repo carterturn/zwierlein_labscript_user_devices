@@ -21,10 +21,11 @@ class PrawnDO(IntermediateDevice):
     def generate_code(self, hdf5_file):
         IntermediateDevice.generate_code(self, hdf5_file)
 
-        times = self.parent_device.parent_device.times[self.parent_device]
-        bits = [0] * 16
+        bits = [0] * 16 # Start with a list of 16 zeros
         for line in self.child_devices:
+            # Replace each zero with the list for each output
             bits[int(line.connection, 16)] = line.raw_output
+        # Merge list of lists into an array with a single 16 bit integer column
         do_table = np.array(bitfield(bits, dtype=np.uint16))
 
         group = hdf5_file['devices'].require_group(self.name)
