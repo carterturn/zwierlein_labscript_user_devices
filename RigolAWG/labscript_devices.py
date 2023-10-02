@@ -16,8 +16,9 @@ class RigolDG4162Channel(TriggerableDevice):
         self.state = 0
         self.mode = 'static'
         self.freq = 0.0
-        self.freq_stop = 0.0
+        self.freq_2 = 0.0
         self.amplitude = 0.0
+        self.mod_amp = 0.0
         self.time = 0.0
         self.time_hold_start = 0.0
         self.time_hold_stop = 0.0
@@ -27,6 +28,8 @@ class RigolDG4162Channel(TriggerableDevice):
         self.trigger_slope = 'POS'
         self.trigger_source = 'EXT'
         self.trigger_out = 'OFF'
+        self.mod_source = 'INT'
+        self.mod_shape = 'SIN'
 
         self.setup = False
 
@@ -47,7 +50,7 @@ class RigolDG4162Channel(TriggerableDevice):
         self.state = 1
         self.mode = 'sweep'
         self.freq = freq_start
-        self.freq_stop = freq_stop
+        self.freq_2 = freq_stop
         self.amplitude = amp
 
         self.time = ramp_time
@@ -58,6 +61,20 @@ class RigolDG4162Channel(TriggerableDevice):
 
         if trigger:
             self.parent_device.trigger(t, 1e-4)
+
+        self.setup = True
+
+    def fm_mod_output(self, amp, carrier_freq, mod_amp, mod_source='INT', mod_freq=50e3, mod_shape='SIN'):
+        if self.setup:
+            raise LabscriptError('%s has already been setup. It can only have one output per run.' % self.name)
+        self.state = 1
+        self.mode = 'fm_mod'
+        self.amplitude = amp
+        self.freq = carrier_freq
+        self.freq_2 = mod_freq
+        self.mod_amp = mod_amp
+        self.mod_source = mod_source
+        self.mod_shape = mod_shape
 
         self.setup = True
 
@@ -112,8 +129,9 @@ class RigolDG4162(IntermediateDevice):
         params = np.empty(1, dtype=[('state', bool),
                                     ('mode', '<S8'),
                                     ('freq', float),
-                                    ('freq_stop', float),
+                                    ('freq_2', float),
                                     ('amplitude', float),
+                                    ('mod_amp', float),
                                     ('time', float),
                                     ('time_hold_start', float),
                                     ('time_hold_stop', float),
@@ -123,12 +141,15 @@ class RigolDG4162(IntermediateDevice):
                                     ('trigger_slope', '<S3'),
                                     ('trigger_source', '<S3'),
                                     ('trigger_out', '<S3'),
+                                    ('mod_source', '<S5'),
+                                    ('mod_shape', '<S5'),
                                     ])
         params['state'] = channel.state
         params['mode'] = channel.mode
         params['freq'] = channel.freq
-        params['freq_stop'] = channel.freq_stop
+        params['freq_2'] = channel.freq_2
         params['amplitude'] = channel.amplitude
+        params['mod_amp'] = channel.mod_amp
         params['time'] = channel.time
         params['time_hold_start'] = channel.time_hold_start
         params['time_hold_stop'] = channel.time_hold_stop
@@ -138,6 +159,8 @@ class RigolDG4162(IntermediateDevice):
         params['trigger_slope'] = channel.trigger_slope
         params['trigger_source'] = channel.trigger_source
         params['trigger_out'] = channel.trigger_out
+        params['mod_source'] = channel.mod_source
+        params['mod_shape'] = channel.mod_shape
 
         return params
 
