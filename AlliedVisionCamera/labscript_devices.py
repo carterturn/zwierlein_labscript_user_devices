@@ -8,19 +8,7 @@ class AlliedVisionCamera(IMAQdxCamera):
     @set_passed_properties(
         property_names={
             "connection_table_properties": [
-                "serial_number",
-                "orientation",
-                "pixel_size",
-                "magnification",
-                "manual_mode_camera_attributes",
-                "mock",
                 "legacy_save_folder",
-            ],
-            "device_properties": [
-                "camera_attributes",
-                "stop_acquisition_timeout",
-                "exception_on_failed_shot",
-                "saved_attribute_visibility_level"
             ],
         }
     )
