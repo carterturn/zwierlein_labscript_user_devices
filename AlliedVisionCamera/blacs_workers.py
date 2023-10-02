@@ -6,6 +6,7 @@ import h5py
 import labscript_utils.properties
 import zmq
 import os
+from labscript_utils.shared_drive import path_to_local
 
 from labscript_utils.ls_zprocess import Context
 
