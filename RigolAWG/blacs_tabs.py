@@ -27,9 +27,9 @@ class Rigol4162Tab(DeviceTab):
             outputs['amplitude'] = AO('amplitude', device.name, self.device_name,
                                       self.program_device, self.settings,
                                       None, None, 'dBm', -30, 30, 1, 2)
-            outputs['freq_stop'] = AO('freq_stop', device.name, self.device_name,
-                                      self.program_device, self.settings,
-                                      None, None, 'Hz', 0, 1e10, 1e3, 5)
+            outputs['freq_2'] = AO('freq_2', device.name, self.device_name,
+                                   self.program_device, self.settings,
+                                   None, None, 'Hz', 0, 1e10, 1e3, 5)
             outputs['time'] = AO('time', device.name, self.device_name,
                                  self.program_device, self.settings,
                                  None, None, 's', 0, 30, 0.01, 3)
@@ -57,6 +57,15 @@ class Rigol4162Tab(DeviceTab):
             outputs['trigger_out'] = EO('trigger_out', device.name, self.device_name,
                                         self.program_device, self.settings,
                                         RigolDG4162EnumTriggerOut)
+            outputs['mod_amp'] = AO('mod_amp', device.name, self.device_name,
+                                    self.program_device, self.settings,
+                                    None, None, 'Hz', 0, 1e10, 1e3, 5)
+            outputs['mod_source'] = EO('mod_source', device.name, self.device_name,
+                                       self.program_device, self.settings,
+                                       RigolDG4162EnumModSource)
+            outputs['mod_shape'] = EO('mod_shape', device.name, self.device_name,
+                                      self.program_device, self.settings,
+                                      RigolDG4162EnumModShape)
 
             widgets = {}
             for name, output in outputs.items():
