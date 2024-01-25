@@ -59,21 +59,17 @@ class _RigolDG4162InterfaceChannel(object):
         self.state = 0
         self.mode = None
 
-        self._clear_static()
-        self._clear_sweep()
+        self._clear()
 
         return
 
-    def _clear_static(self):
+    def _clear(self):
+        # Static variables
         self.freq = None
         self.amplitude = None
 
-        return
-
-    def _clear_sweep(self):
-        self.freq_start = None
-        self.freq_stop = None
-        self.amplitude = None
+        # Sweep variables
+        self.freq_2 = None
         self.time = None
         self.time_hold_start = None
         self.time_hold_stop = None
@@ -84,10 +80,15 @@ class _RigolDG4162InterfaceChannel(object):
         self.trigger_source = None
         self.trigger_out = None
 
+        # FM mod variables
+        self.mod_amp = None
+        self.mod_source = None
+        self.mod_shape = None
+
         return
 
     def get_state(self):
-        return self.io.query(':OUTP{}:STAT?'.format(self.channel))
+        return self.io.query(':OUTP{:d}:STAT?'.format(self.channel))
 
     def get_mode(self):
         return self.mode
@@ -103,26 +104,32 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_static_freq(self):
-        return self.io.query(':SOUR{}:FREQ?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ?'.format(self.channel))
 
     def get_static_amplitude(self):
-        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:VOLT?'.format(self.channel))
 
     def static(self, freq, amplitude, fresh):
         if self.mode != 'static' or not fresh:
-            self.io.write(':SOUR{}:SWE:STAT OFF'.format(self.channel))
-            self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
-            self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
+            # First attempt to disable sweep just changes front panel, need to send twice
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            # First attempt to disable FM mod just changes front panel, need to send twice
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+
+            self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
+            self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
             fresh = False
 
         if self.freq != freq or not fresh:
-            self.io.write(':SOUR{}:FREQ {}'.format(self.channel, freq))
+            self.io.write(':SOUR{:d}:FREQ {}'.format(self.channel, freq))
         if self.amplitude != amplitude or not fresh:
-            self.io.write(':SOUR{}:VOLT:UNIT DBM'.format(self.channel))
-            self.io.write(':SOUR{}:VOLT {}'.format(self.channel, amplitude))
-            self.io.write(':SOUR{}:VOLT:OFFS 0'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT:UNIT DBM'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT {}'.format(self.channel, amplitude))
+            self.io.write(':SOUR{:d}:VOLT:OFFS 0'.format(self.channel))
 
-        self._clear_sweep()
+        self._clear()
         self.mode = 'static'
         self.freq = freq
         self.amplitude = amplitude
@@ -130,40 +137,40 @@ class _RigolDG4162InterfaceChannel(object):
         return
 
     def get_sweep_freq_start(self):
-        return self.io.query(':SOUR{}:FREQ:STAR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ:STAR?'.format(self.channel))
 
     def get_sweep_freq_stop(self):
-        return self.io.query(':SOUR{}:FREQ:STOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:FREQ:STOP?'.format(self.channel))
 
     def get_sweep_amplitude(self):
-        return self.io.query(':SOUR{}:VOLT?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:VOLT?'.format(self.channel))
 
     def get_sweep_time(self):
-        return self.io.query(':SOUR{}:SWE:TIME?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TIME?'.format(self.channel))
 
     def get_sweep_time_hold_start(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:STAR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:STAR?'.format(self.channel))
 
     def get_sweep_time_hold_stop(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:STOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:STOP?'.format(self.channel))
 
     def get_sweep_time_return(self):
-        return self.io.query(':SOUR{}:SWE:HTIM:RTIM?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:HTIM:RTIM?'.format(self.channel))
 
     def get_sweep_spacing(self):
-        return self.io.query(':SOUR{}:SWE:SPAC?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:SPAC?'.format(self.channel))
 
     def get_sweep_trigger_slope(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:SLOP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:SLOP?'.format(self.channel))
 
     def get_sweep_trigger_source(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:SOUR?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:SOUR?'.format(self.channel))
 
     def get_sweep_trigger_out(self):
-        return self.io.query(':SOUR{}:SWE:TRIG:TRIGO?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:TRIG:TRIGO?'.format(self.channel))
 
     def get_sweep_steps(self):
-        return self.io.query(':SOUR{}:SWE:STEP?'.format(self.channel))
+        return self.io.query(':SOUR{:d}:SWE:STEP?'.format(self.channel))
 
     def sweep(self, freq_start, freq_stop, amplitude,
               time, time_hold_start, time_hold_stop, time_return, spacing,
@@ -187,44 +194,48 @@ class _RigolDG4162InterfaceChannel(object):
             time = 'MIN'
 
         if self.mode != 'sweep' or not fresh:
-            self.io.write(':OUTP{}:LOAD 50'.format(self.channel))
-            self.io.write(':SOUR{}:FUNC:SHAP SIN'.format(self.channel))
-            self.io.write(':SOUR{}:SWE:STAT ON'.format(self.channel))
+            self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
+            self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
+            # First attempt to disable FM mod just changes front panel, need to send twice
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:MOD:STAT OFF'.format(self.channel))
+
+            self.io.write(':SOUR{:d}:SWE:STAT ON'.format(self.channel))
             fresh = False
-        if self.freq_start != freq_start or not fresh:
-            self.io.write(':SOUR{}:FREQ:STAR {}'.format(self.channel, freq_start))
-        if self.freq_stop != freq_stop or not fresh:
-            self.io.write(':SOUR{}:FREQ:STOP {}'.format(self.channel, freq_stop))
+        if self.freq != freq_start or not fresh:
+            self.io.write(':SOUR{:d}:FREQ:STAR {}'.format(self.channel, freq_start))
+        if self.freq_2 != freq_stop or not fresh:
+            self.io.write(':SOUR{:d}:FREQ:STOP {}'.format(self.channel, freq_stop))
         if self.amplitude != amplitude or not fresh:
-            self.io.write(':SOUR{}:VOLT:UNIT DBM'.format(self.channel))
-            self.io.write(':SOUR{}:VOLT {}'.format(self.channel, amplitude))
-            self.io.write(':SOUR{}:VOLT:OFFS 0'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT:UNIT DBM'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT {}'.format(self.channel, amplitude))
+            self.io.write(':SOUR{:d}:VOLT:OFFS 0'.format(self.channel))
         if self.time_hold_start != time_hold_start or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:STAR {}'.format(self.channel, time_hold_start))
+            self.io.write(':SOUR{:d}:SWE:HTIM:STAR {}'.format(self.channel, time_hold_start))
         if self.time_hold_stop != time_hold_stop or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:STOP {}'.format(self.channel, time_hold_stop))
+            self.io.write(':SOUR{:d}:SWE:HTIM:STOP {}'.format(self.channel, time_hold_stop))
         if self.time_return != time_return or not fresh:
-            self.io.write(':SOUR{}:SWE:HTIM:RTIM {}'.format(self.channel, time_return))
+            self.io.write(':SOUR{:d}:SWE:HTIM:RTIM {}'.format(self.channel, time_return))
         if self.spacing != spacing or not fresh:
-            self.io.write(':SOUR{}:SWE:SPAC '.format(self.channel) + spacing)
+            self.io.write(':SOUR{:d}:SWE:SPAC '.format(self.channel) + spacing)
         if spacing == 'STE' and (self.steps != steps or not fresh):
-            self.io.write(':SOUR{}:SWE:STEP {}'.format(self.channel, steps))
+            self.io.write(':SOUR{:d}:SWE:STEP {}'.format(self.channel, steps))
         if self.time != time or not fresh:
-            self.io.write(':SOUR{}:SWE:TIME {}'.format(self.channel, time))
+            self.io.write(':SOUR{:d}:SWE:TIME {}'.format(self.channel, time))
         if self.trigger_slope != trigger_slope or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:SLOP '.format(self.channel) + trigger_slope)
+            self.io.write(':SOUR{:d}:SWE:TRIG:SLOP '.format(self.channel) + trigger_slope)
         if self.trigger_source != trigger_source or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:SOUR '.format(self.channel) + trigger_source)
+            self.io.write(':SOUR{:d}:SWE:TRIG:SOUR '.format(self.channel) + trigger_source)
         if self.trigger_out != trigger_out or not fresh:
-            self.io.write(':SOUR{}:SWE:TRIG:TRIGO '.format(self.channel) + trigger_out)
+            self.io.write(':SOUR{:d}:SWE:TRIG:TRIGO '.format(self.channel) + trigger_out)
 
         if trigger_source == 'MAN': # Trigger manual sweep now
-            self.io.write(':SOUR{}:SWE:TRIG:IMM'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:TRIG:IMM'.format(self.channel))
 
-        self._clear_static()
+        self._clear()
         self.mode = 'sweep'
-        self.freq_start = freq_start
-        self.freq_stop = freq_stop
+        self.freq = freq_start
+        self.freq_2 = freq_stop
         self.amplitude = amplitude
         self.time = time
         self.time_hold_start = time_hold_start
@@ -235,6 +246,59 @@ class _RigolDG4162InterfaceChannel(object):
         self.trigger_source = trigger_source
         self.trigger_out = trigger_out
         self.steps = steps
+
+        return
+
+    def get_fm_mod_mod_freq(self):
+        return self.io.query(':SOUR{:d}:MOD:FM:INT:FREQ?'.format(self.channel))
+
+    def get_fm_mod_mod_amp(self):
+        return self.io.query(':SOUR{:d}:MOD:FM:DEV?'.format(self.channel))
+
+    def get_fm_mod_mod_source(self):
+        return self.io.query(':SOUR{:d}:MOD:FM:SOUR?'.format(self.channel))
+
+    def get_fm_mod_mod_shape(self):
+        return self.io.query(':SOUR{:d}:MOD:FM:INT:FUNC?'.format(self.channel))
+
+    def fm_mod(self, carrier_freq, mod_freq, amplitude, mod_amp, mod_source, mod_shape, fresh):
+        if self.mode != 'fm_mod' or not fresh:
+            self.io.write(':OUTP{:d}:LOAD 50'.format(self.channel))
+            self.io.write(':SOUR{:d}:FUNC:SHAP SIN'.format(self.channel))
+            # First attempt to disable sweep just changes front panel, need to send twice
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+            self.io.write(':SOUR{:d}:SWE:STAT OFF'.format(self.channel))
+
+            self.io.write(':SOUR{:d}:MOD:STAT ON'.format(self.channel))
+            self.io.write(':SOUR{:d}:MOD:TYP FM'.format(self.channel))
+            fresh = False
+        if self.mod_source != mod_source or not fresh:
+            self.io.write(':SOUR{:d}:MOD:FM:SOUR {}'.format(self.channel, mod_source))
+        if self.freq != carrier_freq or not fresh:
+            self.io.write(':SOUR{:d}:FREQ {}'.format(self.channel, carrier_freq))
+        if self.amplitude != amplitude or not fresh:
+            self.io.write(':SOUR{:d}:VOLT:UNIT DBM'.format(self.channel))
+            self.io.write(':SOUR{:d}:VOLT {}'.format(self.channel, amplitude))
+            self.io.write(':SOUR{:d}:VOLT:OFFS 0'.format(self.channel))
+        if self.freq_2 != mod_freq or not fresh:
+            if mod_freq > 50e3:
+                mod_freq = 50e3
+            if mod_freq < 2e-3:
+                mod_freq = 2e-3
+            self.io.write(':SOUR{:d}:MOD:FM:INT:FREQ {}'.format(self.channel, mod_freq))
+        if self.mod_amp != mod_amp or not fresh:
+            self.io.write(':SOUR{:d}:MOD:FM:DEV {}'.format(self.channel, mod_amp))
+        if mod_source == 'INT' and (self.mod_shape != mod_shape or not fresh):
+            self.io.write(':SOUR{:d}:MOD:FM:INT:FUNC {}'.format(self.channel, mod_shape))
+
+        self._clear()
+        self.mode = 'fm_mod'
+        self.freq = carrier_freq
+        self.freq_2 = mod_freq
+        self.amplitude = amplitude
+        self.mod_amp = mod_amp
+        self.mod_source = mod_source
+        self.mod_shape = mod_shape
 
         return
 
@@ -335,6 +399,28 @@ class RigolDG4162Interface(object):
                                               trigger_slope, trigger_source,
                                               trigger_out, steps, fresh)
 
+    def get_fm_mod_mod_freq(self, channel):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].get_fm_mod_mod_freq()
+
+    def get_fm_mod_mod_amp(self, channel):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].get_fm_mod_mod_amp()
+
+    def get_fm_mod_mod_source(self, channel):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].get_fm_mod_mod_source()
+
+    def get_fm_mod_mod_shape(self, channel):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].get_fm_mod_mod_shape()
+
+    def fm_mod(self, channel, carrier_freq, mod_freq, amplitude,
+               mod_amp, mod_source, mod_shape, fresh=False):
+        assert channel in [1, 2], 'channel should be 1 or 2'
+        return self.channels[channel-1].fm_mod(carrier_freq, mod_freq, amplitude, mod_amp,
+                                               mod_source, mod_shape, fresh)
+
     def write(self, command):
         return self.io.write(command)
 
@@ -366,8 +452,8 @@ class Rigol4162Worker(Worker):
             elif mode == 'sweep':
                 cv = {'state': 1, 'mode': 'sweep',
                       'freq_start': self.rigol.get_sweep_freq_start(channel),
-                      'freq_stop': self.rigol.get_sweep_freq_stop(channel),
-                      'amplitude': self.rigol.get_sweep_amplitude(channel),
+                      'freq_2': self.rigol.get_sweep_freq_stop(channel),
+                      'amplitude': self.rigol.get_static_amplitude(channel),
                       'time': self.rigol.get_sweep_time(channel),
                       'time_hold_start': self.rigol.get_sweep_time_hold_start(channel),
                       'time_hold_stop': self.rigol.get_sweep_time_hold_stop(channel),
@@ -377,6 +463,15 @@ class Rigol4162Worker(Worker):
                       'trigger_slope': self.rigol.get_sweep_trigger_slope(channel),
                       'trigger_source': self.rigol.get_sweep_trigger_source(channel),
                       'trigger_out': self.rigol.get_sweep_trigger_out(channel)}
+                remote_values['channel {:d}'.format(channel)] = cv
+            elif mode == 'fm_mod':
+                cv = {'state': 1, 'mode': 'fm_mod',
+                      'freq': self.rigol.get_static_freq(channel),
+                      'freq_2': self.rigol.get_fm_mod_mod_freq(channel),
+                      'amplitude': self.rigol.get_static_amplitude(channel),
+                      'mod_amp': self.rigol.get_fm_mod_mod_amp(channel),
+                      'mod_source': self.rigol.get_fm_mod_mod_source(channel),
+                      'mod_shape': self.rigol.get_fm_mod_mod_shape(channel)}
                 remote_values['channel {:d}'.format(channel)] = cv
             else:
                 remote_values['channel {:d}'.format(channel)] = {'state': 0}
@@ -398,12 +493,16 @@ class Rigol4162Worker(Worker):
             if setting['mode'] == 'static':
                 self.rigol.static(channel, setting['freq'], setting['amplitude'])
             elif setting['mode'] == 'sweep':
-                self.rigol.sweep(channel, setting['freq'], setting['freq_stop'],
+                self.rigol.sweep(channel, setting['freq'], setting['freq_2'],
                                  setting['amplitude'], setting['time'],
                                  setting['time_hold_start'], setting['time_hold_stop'],
                                  setting['time_return'], setting['spacing'],
                                  setting['trigger_slope'], setting['trigger_source'],
                                  setting['trigger_out'], setting['steps'])
+            elif setting['mode'] == 'fm_mod':
+                self.rigol.fm_mod(channel, setting['freq'], setting['freq_2'],
+                                  setting['amplitude'], setting['mod_amp'],
+                                  setting['mod_source'], setting['mod_shape'])
             else:
                 print('Invalid mode')
 
@@ -422,7 +521,7 @@ class Rigol4162Worker(Worker):
         elif mode == 'sweep':
             return {'state': 1, 'mode': 'sweep',
                     'freq': dataset['freq'][0],
-                    'freq_stop': dataset['freq_stop'][0],
+                    'freq_2': dataset['freq_2'][0],
                     'amplitude': dataset['amplitude'][0],
                     'time': dataset['time'][0],
                     'time_hold_start': dataset['time_hold_start'][0],
@@ -433,6 +532,14 @@ class Rigol4162Worker(Worker):
                     'trigger_slope': dataset['trigger_slope'][0].decode(),
                     'trigger_source': dataset['trigger_source'][0].decode(),
                     'trigger_out': dataset['trigger_out'][0].decode()}
+        elif mode == 'fm_mod':
+            return {'state': 1, 'mode': 'fm_mod',
+                    'freq': dataset['freq'][0],
+                    'freq_2': dataset['freq_2'][0],
+                    'amplitude': dataset['amplitude'][0],
+                    'mod_amp': dataset['mod_amp'][0],
+                    'mod_source': dataset['mod_source'][0].decode(),
+                    'mod_shape': dataset['mod_shape'][0].decode()}
         else:
             return {'state': 0}
 

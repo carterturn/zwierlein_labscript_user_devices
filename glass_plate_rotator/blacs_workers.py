@@ -47,6 +47,10 @@ class GlassPlateRotatorWorker(Worker):
         set_1_msg += '>'
         self.conn.write(set_1_msg.encode())
 
+        # Flush input buffer
+        while self.conn.in_waiting > 0:
+            self.conn.read()
+
     def program_manual(self, values):
         modes = []
         positions_0 = []
@@ -78,7 +82,6 @@ class GlassPlateRotatorWorker(Worker):
         return True
 
     def abort_buffered(self):
-        self.intf.abort()
         return True
 
     def abort_transition_to_buffered(self):
