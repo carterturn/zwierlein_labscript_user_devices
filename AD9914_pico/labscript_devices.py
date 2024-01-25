@@ -48,20 +48,20 @@ class AD9914Pico(TriggerableDevice):
             # Bound amplitude to avoid unexpected results
             if cl['start_amp'] < 0:
                 cl['start_amp'] = 0
-                sys.stderror.write('WARNING: %s has a command with start_amp < 0 at time %s. Bounding to 0.'
-                                   % (self.name, str(cl['t'])))
+                sys.stderr.write('WARNING: %s has a command with start_amp < 0 at time %s. Bounding to 0.\n'
+                                 % (self.name, str(cl['t'])))
             if cl['start_amp'] > 1:
                 cl['start_amp'] = 1
-                sys.stderror.write('WARNING: %s has a command with start_amp > 1 at time %s. Bounding to 1.'
-                                   % (self.name, str(cl['t'])))
+                sys.stderr.write('WARNING: %s has a command with start_amp > 1 at time %s. Bounding to 1.\n'
+                                 % (self.name, str(cl['t'])))
             if cl['stop_amp'] < 0:
                 cl['stop_amp'] = 0
-                sys.stderror.write('WARNING: %s has a command with stop_amp < 0 at time %s. Bounding to 0.'
-                                   % (self.name, str(cl['t'])))
+                sys.stderr.write('WARNING: %s has a command with stop_amp < 0 at time %s. Bounding to 0.\n'
+                                 % (self.name, str(cl['t'])))
             if cl['stop_amp'] > 1:
                 cl['stop_amp'] = 1
-                sys.stderror.write('WARNING: %s has a command with stop_amp > 1 at time %s. Bounding to 1.'
-                                   % (self.name, str(cl['t'])))
+                sys.stderr.write('WARNING: %s has a command with stop_amp > 1 at time %s. Bounding to 1.\n'
+                                 % (self.name, str(cl['t'])))
 
             ca['start freq'] = cl['start_freq']
             ca['stop freq'] = cl['stop_freq']
