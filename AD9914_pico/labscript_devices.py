@@ -18,59 +18,59 @@ class AD9914Pico(TriggerableDevice):
         self.trigger_edge_type = parent_device.trigger_edge_type
         TriggerableDevice.__init__(self, name, parent_device, connection='trigger', **kwargs)
         self.BLACS_connection = 'AD9914Pico: {}'.format(name)
-        self.command_list = []
+        # List of command tuples in the form
+        #     (t, start freq, stop freq, start amp, stop amp, sweep, sweep time, triger)
+        self.commands = []
 
     def generate_code(self, hdf5_file):
         TriggerableDevice.generate_code(self, hdf5_file)
 
-        self.command_list.sort(key=lambda cl: cl['t'])
+        # Sort commands by start time
+        self.commands.sort(key=lambda c: c[0])
 
         # Check for overlapping ramps
-        for cl in self.command_list:
-            t_start = cl['t']
-            if cl['sweep']:
-                t_end = cl['t'] + cl['sweep_time']
+        for cl in self.commands:
+            t_start = cl[0]
+            if cl[5]:
+                t_end = cl[0] + cl[6]
             else:
-                t_end = cl['t'] + 2e-6
-            for cl_ in self.command_list:
-                if cl_['t'] > t_start and cl_['t'] < t_end:
-                    raise LabscriptError('%s requires trigger at %s, overlapping with a ramp from t = %s to %s' % (self.name, str(cl_['t']), str(t_start), str(t_end)))
+                t_end = cl[0] + 2e-6
+            for cl_ in self.commands:
+                if cl_[0] > t_start + 1e-9 and cl_[0] < t_end - 1e-9:
+                    # Add 1e-9 (smaller than possible resolution) to mitigate floating point errors.
+                    raise LabscriptError('%s requires trigger at %s, overlapping with a ramp from t = %s to %s' % (self.name, str(cl_[0]), str(t_start), str(t_end)))
 
-        command_array = np.empty(len(self.command_list),
-                                 dtype=[('start freq', float),
-                                        ('start amp', float),
+        command_array = np.array(self.commands,
+                                 dtype=[('t', float),
+                                        ('start freq', float),
                                         ('stop freq', float),
+                                        ('start amp', float),
                                         ('stop amp', float),
                                         ('sweep', bool),
                                         ('sweep time', float),
                                         ('trigger', bool)])
-        for cl, ca in zip(self.command_list, command_array):
-            # Bound amplitude to avoid unexpected results
-            if cl['start_amp'] < 0:
-                cl['start_amp'] = 0
-                sys.stderr.write('WARNING: %s has a command with start_amp < 0 at time %s. Bounding to 0.\n'
-                                 % (self.name, str(cl['t'])))
-            if cl['start_amp'] > 1:
-                cl['start_amp'] = 1
-                sys.stderr.write('WARNING: %s has a command with start_amp > 1 at time %s. Bounding to 1.\n'
-                                 % (self.name, str(cl['t'])))
-            if cl['stop_amp'] < 0:
-                cl['stop_amp'] = 0
-                sys.stderr.write('WARNING: %s has a command with stop_amp < 0 at time %s. Bounding to 0.\n'
-                                 % (self.name, str(cl['t'])))
-            if cl['stop_amp'] > 1:
-                cl['stop_amp'] = 1
-                sys.stderr.write('WARNING: %s has a command with stop_amp > 1 at time %s. Bounding to 1.\n'
-                                 % (self.name, str(cl['t'])))
 
-            ca['start freq'] = cl['start_freq']
-            ca['stop freq'] = cl['stop_freq']
-            ca['start amp'] = cl['start_amp']
-            ca['stop amp'] = cl['stop_amp']
-            ca['sweep'] = cl['sweep']
-            if cl['sweep']:
-                ca['sweep time'] = cl['sweep_time']
-            ca['trigger'] = cl['trigger']
+        # Check amplitudes
+        if np.any(command_array['start amp'] < 0):
+            bad_idx = np.where(command_array['start amp'] < 0)
+            sys.stderr.write('WARNING: %s has commands with start_amp < 0 at times %s. Bounding to 0.\n'
+                             % (self.name, str(command_array['t'][bad_idx])))
+            command_array['start amp'][bad_idx] = 0
+        if np.any(command_array['start amp'] > 1):
+            bad_idx = np.where(command_array['start amp'] > 1)
+            sys.stderr.write('WARNING: %s has commands with start_amp > 1 at times %s. Bounding to 1.\n'
+                             % (self.name, str(command_array['t'][bad_idx])))
+            command_array['start amp'][bad_idx] = 1
+        if np.any(command_array['stop amp'] < 0):
+            bad_idx = np.where(command_array['stop amp'] < 0)
+            sys.stderr.write('WARNING: %s has commands with stop_amp < 0 at times %s. Bounding to 0.\n'
+                             % (self.name, str(command_array['t'][bad_idx])))
+            command_array['stop amp'][bad_idx] = 0
+        if np.any(command_array['stop amp'] > 1):
+            bad_idx = np.where(command_array['stop amp'] > 1)
+            sys.stderr.write('WARNING: %s has commands with stop_amp > 1 at times %s. Bounding to 1.\n'
+                             % (self.name, str(command_array['t'][bad_idx])))
+            command_array['stop amp'][bad_idx] = 1
 
         group = hdf5_file['devices'].require_group(self.name)
         group.create_dataset('dds_data', data=command_array)
@@ -88,15 +88,7 @@ class AD9914Pico(TriggerableDevice):
         start_amp: Amplitude to start at, arbitrary units from 1.0 to 0.0
         stop_amp: Amplitude to stop at, arbitrary units from 1.0 to 0.0
         '''
-        self.command_list.append({'t': t,
-                                  'start_freq': start_freq,
-                                  'stop_freq': stop_freq,
-                                  'start_amp': start_amp,
-                                  'stop_amp': stop_amp,
-                                  'sweep': True,
-                                  'sweep_time': duration,
-                                  'trigger': True,
-                                  })
+        self.commands.append((t, start_freq, stop_freq, start_amp, stop_amp, True, duration, True))
         self.trigger(t=t, duration=duration/2.)
 
     def constant(self, t, freq, amp):
@@ -108,14 +100,7 @@ class AD9914Pico(TriggerableDevice):
         freq: Frequency to set, Hz
         amp: Amplitude to set, arbitrary units from 1.0 to 0.0
         '''
-        self.command_list.append({'t': t,
-                                  'start_freq': freq,
-                                  'stop_freq': freq,
-                                  'start_amp': amp,
-                                  'stop_amp': amp,
-                                  'sweep': False,
-                                  'trigger': True,
-                                  })
+        self.commands.append((t, freq, freq, amp, amp, False, 0.0, True))
         self.trigger(t=t, duration=2e-6) # Need to be >1e-6s for safe triggering with NI card
 
     def customramp(self, t, duration, freq_function, amp_function, **kwargs):
@@ -136,43 +121,15 @@ class AD9914Pico(TriggerableDevice):
         	Output should be a amplitude between 0.0 and 1.0.
         '''
         t_step = 1. / kwargs.pop('samplerate')
+        sample_times = np.arange(0, duration, t_step)
+        freqs = list(freq_function(sample_times))
+        amps = list(amp_function(sample_times))
 
-        first_linear = True
-        t_rel = 0
-        next_freq = freq_function(0)
-        next_amp = amp_function(0)
-
-        while t_rel < duration - t_step:
-            start_freq = next_freq
-            start_amp = next_amp
-            t_rel = t_rel + t_step
-            next_freq = freq_function(t_rel)
-            next_amp = amp_function(t_rel)
-
-            self.command_list.append({'t': t + t_rel - t_step,
-                                      'start_freq': start_freq,
-                                      'stop_freq': next_freq,
-                                      'start_amp': start_amp,
-                                      'stop_amp': next_amp,
-                                      'sweep': True,
-                                      'sweep_time': t_step,
-                                      'trigger': first_linear
-                                      })
-
-            first_linear = False
-
-        start_freq = next_freq
-        start_amp = next_amp
-        next_freq = freq_function(duration)
-        next_amp = amp_function(duration)
-
-        self.command_list.append({'t': t + t_rel - t_step,
-                                  'start_freq': start_freq,
-                                  'stop_freq': next_freq,
-                                  'start_amp': start_amp,
-                                  'stop_amp': next_amp,
-                                  'sweep': True,
-                                  'sweep_time': duration + t_step - (t + t_rel),
-                                  'trigger': False
-                                  })
+        command_array = np.array([sample_times + t,
+                                  freqs, freqs[1:] + [freq_function(duration)],
+                                  amps, amps[1:] + [amp_function(duration)],
+                                  [True] * len(sample_times),
+                                  [t_step] * (len(sample_times) - 1) + [duration - sample_times[-1]],
+                                  [True] + [False] * (len(sample_times) - 1)])
+        self.commands += [tuple(ca) for ca in command_array.T]
         self.trigger(t=t, duration=duration/2.)
