@@ -1,9 +1,12 @@
-from labscript import TriggerableDevice, IntermediateDevice, set_passed_properties, LabscriptError
+from labscript import AnalogQuantity, TriggerableDevice, set_passed_properties, LabscriptError
 
 import numpy as np
 import sys
 
 class AD9914Pico(TriggerableDevice):
+
+    # Frequency and amplitude are added as children, though never used due to instruction encoding.
+    allowed_children = [AnalogQuantity]
 
     @set_passed_properties(
         property_names={
@@ -22,8 +25,11 @@ class AD9914Pico(TriggerableDevice):
         #     (t, start freq, stop freq, start amp, stop amp, sweep, sweep time, triger)
         self.commands = []
 
+        self._freq = AnalogQuantity(self.name + '_freq', self, 'freq')
+        self._amp = AnalogQuantity(self.name + '_amp', self, 'amp')
+
     def generate_code(self, hdf5_file):
-        TriggerableDevice.generate_code(self, hdf5_file)
+        TriggerableDevice.do_checks(self)
 
         # Sort commands by start time
         self.commands.sort(key=lambda c: c[0])
