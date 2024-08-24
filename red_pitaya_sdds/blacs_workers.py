@@ -106,8 +106,6 @@ class RedPitayaSDDSWorker(Worker):
                                                      ('amp_step', '<i2'),
                                                      ('step_total', '<u4')])
             command_array[0]['amp_start'] |= 0x8000
-            print(command_array)
-            print(len(command_array))
             self.intf.add_batch(chan, command_array)
 
         if not self.intf.run('A') or not self.intf.run('B'):
