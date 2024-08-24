@@ -46,11 +46,11 @@ class RedPitayaSDDSChannel(TriggerableDevice):
 
         conv_commands = []
         for c in self.commands:
-            step_total = int(c[5] * FPGA_CLOCK)
-            conv_commands.append((c[1]*FREQ_SCALE,
-                                  (c[2]-c[1])*FREQ_SCALE*FPGA_STEP_SCALE/step_total,
-                                  c[3]*AMP_SCALE,
-                                  (c[4]-c[3])*2*AMP_SCALE*FPGA_STEP_SCALE/step_total,
+            step_total = int(c[5] * self.FPGA_CLOCK)
+            conv_commands.append((c[1]*self.FREQ_SCALE,
+                                  (c[2]-c[1])*self.FREQ_SCALE*self.FPGA_STEP_SCALE/step_total,
+                                  c[3]*self.AMP_SCALE,
+                                  (c[4]-c[3])*2*self.AMP_SCALE*self.FPGA_STEP_SCALE/step_total,
                                   step_total))
 
         command_array = np.array(conv_commands,

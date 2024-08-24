@@ -70,13 +70,15 @@ class RedPitayaSDDSInterface(object):
     def add_batch(self, chan, commands):
         '''Writes commands to a channel.
         Returns True if length is updated correctly.'''
-        self.conn.send(':'.join(['DDS', chan, 'DAT']).encode()
-                       + b' ' + self._encode_sweeps(commands) + b'\n')
-        self.conn.send(self._scpi_write(['DDS', chan, 'LEN'], str(len(chan))).encode())
+        length = len(commands)
+        self.conn.send(self._scpi_write(['DDS', chan, 'LEN'], str(length)).encode())
+        if length > 0:
+	        data = (':'.join(['DDS', chan, 'DAT']).encode()
+    	            + b' ' + self._encode_sweeps(commands) + b'\n')
+	        self.conn.send(data)
         self.conn.send(self._scpi_read(['DDS', chan, 'LEN']).encode())
         resp = self._scpi_readline()
-        print(resp)
-        return int(resp) == len(commands)
+        return int(resp) == length
 
     def status(self, chan):
         '''Returns (DMA) status.'''
@@ -120,12 +122,17 @@ class RedPitayaSDDSWorker(Worker):
 
         with h5py.File(h5file, 'r') as hdf5_file:
             group = hdf5_file['devices'][device_name]
-            commands = group['dds_data']
-            self.intf.add_batch('A', commands['A'])
-            self.intf.add_batch('B', commands['B'])
+            commands_A = group['A'][()]
+            self.intf.add_batch('A', commands_A)
+            commands_B = group['B'][()]
+            self.intf.add_batch('B', commands_B)
 
-        if not self.intf.run('A') or not self.intf.run('B'):
-            raise RuntimeError('Failed to start Red Pitaya SDDS')
+        if len(commands_A) > 0:
+            if not self.intf.run('A'):
+                raise RuntimeError('Failed to start Red Pitaya SDDS')
+        if len(commands_B) > 0:
+            if not self.intf.run('B'):
+                raise RuntimeError('Failed to start Red Pitaya SDDS')
 
         return {}
 
