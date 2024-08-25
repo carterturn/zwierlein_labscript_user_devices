@@ -86,6 +86,7 @@ class RedPitayaSDDSInterface(object):
         return self._scpi_readline()
 
     def close(self):
+        self.conn.send('close\n'.encode())
         self.conn.close()
 
 class RedPitayaSDDSWorker(Worker):
