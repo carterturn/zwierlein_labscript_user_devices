@@ -35,15 +35,6 @@ class RedPitayaSDDSChannel(TriggerableDevice):
         self.commands = []
 
     def generate_code(self, hdf5_file):
-        # Check for overlapping ramps
-        for cl in self.commands:
-            t_start = cl[0]
-            t_end = cl[0] + cl[5]
-            for cl_ in self.commands:
-                if cl_[0] > t_start + 1e-9 and cl_[0] < t_end - 1e-9:
-                    # Add 1e-9 (smaller than possible resolution) to mitigate floating point errors.
-                    raise LabscriptError('%s requires trigger at %s, overlapping with a ramp from t = %s to %s' % (self.name, str(cl_[0]), str(t_start), str(t_end)))
-
         cmd_arr_float = np.array(self.commands,
                                  dtype=[('t', float),
                                         ('freq_start', float),
@@ -52,6 +43,17 @@ class RedPitayaSDDSChannel(TriggerableDevice):
                                         ('amp_stop', float),
                                         ('duration', float),
                                         ('trigger', '<i1')])
+
+        # Check for overlapping ramps
+        cmd_arr_float.sort(order='t')
+        end_ts = cmd_arr_float['t'] + cmd_arr_float['duration']
+        if np.any(end_ts[1:] < cmd_arr_float['t'][:-1]): # Quick check
+            for cl in self.commands: # Figure out where the problem is
+                t_start = cl[0]
+                t_end = cl[0] + cl[5]
+                for cl_ in self.commands:
+                    if cl_[0] > t_start and cl_[0] < t_end:
+                        raise LabscriptError('%s requires trigger at %s, overlapping with a ramp from t = %s to %s' % (self.name, str(cl_[0]), str(t_start), str(t_end)))
 
         cmd_arr_float_step = np.empty(cmd_arr_float.shape,
                                       dtype=[('freq_start', float),
