@@ -28,6 +28,22 @@ class TeensyDAC(IntermediateDevice):
         self.BLACS_connection = 'TeensyDAC: {}'.format(name)
         self.dac_cmd_scale = dac_cmd_scale
 
+    def add_device(self, device):
+        '''Error checking for adding a child device.
+
+        Args:
+        	device (AnalogOut): Device to attach. Must be an analog output.
+        		Only one allowed, connection must be "output"
+        '''
+        conn = device.connection
+
+        if conn is not 'output':
+            raise LabscriptError(f'Invalid channel specification: {conn}')
+        if len(self.child_devices) > 0:
+            raise LabscriptError(f'TeensyDAC output already connected')
+
+        super().add_device(device)
+
     def generate_code(self, hdf5_file):
         IntermediateDevice.generate_code(self, hdf5_file)
 
