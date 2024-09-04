@@ -37,7 +37,7 @@ class TeensyDAC(IntermediateDevice):
         '''
         conn = device.connection
 
-        if conn is not 'output':
+        if conn != 'output':
             raise LabscriptError(f'Invalid channel specification: {conn}')
         if len(self.child_devices) > 0:
             raise LabscriptError(f'TeensyDAC output already connected')
