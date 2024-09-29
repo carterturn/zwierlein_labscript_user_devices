@@ -6,12 +6,13 @@ and is licensed under the 3-clause BSD License.
 See the license.txt file for the full license.
 '''
 
-from labscript import config, IntermediateDevice, set_passed_properties, AnalogOut
+from user_devices.library.outputs import AnalogRamper
+from labscript import config, IntermediateDevice, set_passed_properties
 
 import numpy as np
 
 class TeensyDAC(IntermediateDevice):
-    allowed_children = [AnalogOut]
+    allowed_children = [AnalogRamper]
 
     @set_passed_properties(
         property_names={
