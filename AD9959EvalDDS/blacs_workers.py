@@ -26,7 +26,7 @@ class AD9959DDSSweeperInterface(object):
         self.assert_OK()
         self.conn.write(b'setclock 0 125000000\n')
         self.assert_OK()
-        self.conn.write(b'mode 0 0\n')
+        self.conn.write(b'mode 0 1\n')
         self.assert_OK()
         self.conn.write(b'setmult 4\n')
         self.assert_OK()
@@ -53,7 +53,7 @@ class AD9959DDSSweeperInterface(object):
 
     def start(self):
         '''Starts buffered execution.'''
-        self.conn.write(b'start\n')
+        self.conn.write(b'hwstart\n')
         self.assert_OK()
     
     def get_status(self):
@@ -97,10 +97,10 @@ class AD9959DDSSweeperInterface(object):
         self.conn.write(b'setchannels %d\n' % channels)
         self.assert_OK()
 
-    def set(self, channel, addr, frequency, amplitude, phase):
+    def set(self, channel, addr, frequency, amplitude, phase, duration):
         '''Set frequency, phase, and amplitude of a channel
         for address addr in buffered sequence.'''
-        self.conn.write(b'set %d %d %f %f %f\n' % (channel, addr, frequency, amplitude, phase))
+        self.conn.write(b'set %d %d %f %f %f %d\n' % (channel, addr, frequency, amplitude, phase, duration))
         self.assert_OK()
 
     def set_batch(self, channel, table):
@@ -110,7 +110,7 @@ class AD9959DDSSweeperInterface(object):
         k_a = 'amp%d' % channel
         k_p = 'phase%d' % channel
         for i, row in enumerate(table):
-            self.conn.write(b'set %d %d %f %f %f\n' % (channel, i, row[k_f], row[k_a], row[k_p]))
+            self.conn.write(b'set %d %d %f %f %f %d\n' % (channel, i, row[k_f], row[k_a], row[k_p], row['duration']))
         for row in table:
 	        self.assert_OK()
 
@@ -139,7 +139,8 @@ class AD9959DDSSweeperWorker(Worker):
             for channel in channels:
                 self.intf.set_batch(channel, dds_data['freq%d' % channel,
                                                       'amp%d' % channel,
-                                                      'phase%d' % channel])
+                                                      'phase%d' % channel,
+                                                      'duration'])
 
         self.intf.start()
 

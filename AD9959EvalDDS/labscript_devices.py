@@ -6,15 +6,33 @@ and is licensed under the 3-clause BSD License.
 See the license.txt file for the full license.
 '''
 
-from labscript import DDS, StaticDDS, IntermediateDevice, set_passed_properties, LabscriptError, config
+from labscript import DDS, StaticDDS, IntermediateDevice, TriggerableDevice, set_passed_properties, LabscriptError, config, Trigger
 from labscript_utils.unitconversions import NovaTechDDS9mFreqConversion, NovaTechDDS9mAmpConversion
 
 
 import numpy as np
 import sys
 
-class AD9959EvalDDS(IntermediateDevice):
+class AD9959EvalDDS(TriggerableDevice):
+    description = 'Pi Pico AD9959 Eval Board DDS device'
+
+    # default specs assuming 125MHz system clock
+    clock_resolution = 8e-9
+    "Minimum resolvable unit of time, corresponsd to system clock period."
+    minimum_duration = 10e-6
+    "Minimum time between updates on the outputs."
+    wait_delay = 50e-9
+    "Minimum required length of wait before a retrigger can be detected."
+    input_response_time = 50e-9
+    "Time between hardware trigger and output starting."
+    trigger_delay = 50e-9
+    trigger_minimum_duration = 160e-9
+    "Minimum required duration of hardware trigger. A fairly large over-estimate."
+
     allowed_children = [DDS, StaticDDS]
+
+    max_instructions = 4032
+    """Maximum number of instructions. Set by zmq timeout when sending the commands."""
 
     @set_passed_properties(
         property_names={
@@ -25,14 +43,44 @@ class AD9959EvalDDS(IntermediateDevice):
         }
     )
 
-    def __init__(self, name, parent_device, com_port, **kwargs):
+    def __init__(self, name, trigger_device=None, trigger_connection=None, clock_line=None,
+                 com_port='COM1', **kwargs):
         '''Labscript device class for AD9959 eval board controlled by a Raspberry Pi Pico.
         '''
-        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
+        if clock_line is not None and trigger_device is not None:
+            raise LabscriptError("Provide only a trigger_device or a clock_line, not both")
+        if clock_line is not None:
+            # make internal Intermediate device and trigger to connect it
+            self.__intermediate = _AD9959EvalDDSIntermediateDevice(f'{name:s}__intermediate',
+                                                                   clock_line)
+            TriggerableDevice.__init__(self, name, self.__intermediate, 'internal')
+        else:
+            # normal device triggering
+            TriggerableDevice.__init__(self, name, trigger_device, trigger_connection)
+
         self.BLACS_connection = '%s' % com_port
 
         self.clk_scale = 2**32
-            
+
+        self._initial_trigger_time = 0
+
+    # following three defs ensure initial_trigger_time is not modified
+    # when directly triggered from a clockline using an internal IntermediateDevice
+    @property
+    def initial_trigger_time(self):
+        return self._initial_trigger_time
+
+    @initial_trigger_time.setter
+    def initial_trigger_time(self, value):
+        if value != 0 and hasattr(self, "__intermediate"):
+            raise LabscriptError("You cannot set the initial trigger time when the AD9959EvalDDS is directly triggered by a clockline")
+        self._initial_trigger_time = value
+
+    def set_initial_trigger_time(self, *args, **kwargs):
+        if hasattr(self, "__intermediate"):
+            raise LabscriptError("You cannot set the initial trigger time when the AD9959EvalDDS is directly triggered by a clockline")
+        return super().set_initial_trigger_time(*args, **kwargs)
+
     def get_default_unit_conversion_classes(self, device):
         """Child devices call this during their __init__ (with themselves
         as the argument) to check if there are certain unit calibration
@@ -88,20 +136,36 @@ class AD9959EvalDDS(IntermediateDevice):
         return data, scale_factor
 
     def generate_code(self, hdf5_file):
+        # Find times at which something occurs
+        all_change_times = []
+        for dds in self.child_devices:
+            for output in dds.child_devices:
+                all_change_times.extend(output.get_change_times())
+        if len(all_change_times) == 0:
+            # No outputs, skip
+            return
+        all_change_times.extend(self.pseudoclock_device.trigger_times)
+        all_change_times.append(self.pseudoclock_device.stop_time)
+        all_change_times = sorted(list(set(all_change_times)))
+
         DDSs = {}
-        for output in self.child_devices:
-            # Check that the instructions will fit into RAM:
-            if isinstance(output, DDS) and len(output.frequency.raw_output) > 4032 - 2: # -2 to include space for dummy instructions
+        for dds in self.child_devices:
+            # Since we are using internal timing, expand timeseries here
+            for output in dds.child_devices:
+                output.make_timeseries(all_change_times)
+                output.expand_timeseries(all_change_times, len(all_change_times))
+           # Check that the instructions will fit into RAM:
+            if isinstance(dds, DDS) and len(dds.frequency.raw_output) > self.max_instructions - 2: # -2 to include space for dummy instructions
                 raise LabscriptError('%s can only support 4030 instructions. ' % self.name +
                                      'Please decrease the sample rates of devices on the same clock, ' + 
                                      'or connect %s to a different pseudoclock.' % self.name)
             try:
-                prefix, channel = output.connection.split()
+                prefix, channel = dds.connection.split()
                 channel = int(channel)
             except:
-                raise LabscriptError('%s %s has invalid connection string: \'%s\'. ' % (output.description,output.name,str(output.connection)) + 
+                raise LabscriptError('%s %s has invalid connection string: \'%s\'. ' % (dds.description,dds.name,str(dds.connection)) + 
                                      'Format must be \'channel n\' with n from 0 to 4.')
-            DDSs[channel] = output
+            DDSs[channel] = dds
 
         if not DDSs:
             # if no channels are being used, no need to continue
@@ -119,25 +183,40 @@ class AD9959EvalDDS(IntermediateDevice):
 
         dtypes = {'names':['freq%d' % i for i in DDSs] +
                   ['amp%d' % i for i in DDSs] +
-                  ['phase%d' % i for i in DDSs],
-                  'formats':[np.uint32 for i in DDSs] +
-                  [np.uint16 for i in DDSs] + 
-                  [np.uint16 for i in DDSs]}  
+                  ['phase%d' % i for i in DDSs] +
+                  ['duration'],
+                  'formats':[np.float for i in DDSs] +
+                  [np.float for i in DDSs] +
+                  [np.float for i in DDSs] +
+                  [np.float]}
 
-        clockline = self.parent_clock_line
-        pseudoclock = clockline.parent_device
-        times = pseudoclock.times[clockline]
-
-        out_table = np.zeros(len(times), dtype=dtypes)
+        out_table = np.zeros(len(all_change_times), dtype=dtypes)
 
         for i, dds in DDSs.items():
             out_table['freq%d' % i][:] = dds.frequency.raw_output
             out_table['amp%d' % i][:] = dds.amplitude.raw_output
             out_table['phase%d' % i][:] = dds.phase.raw_output
 
+        all_change_times = np.array(all_change_times)
+        # Setup trigger waits
+        durations = np.rint(np.diff(all_change_times)/self.clock_resolution).astype(np.uint32)
+        durations = np.concatenate([durations, [0]]) # Add final wait (as stop)
+        for trigger_time in self.pseudoclock_device.trigger_times:
+            if trigger_time == 0:
+                # Already wait for trigger at start
+                continue
+            durations[all_change_times == trigger_time] = 0
+        out_table['duration'][:] = durations
+
+        print(out_table)
         # write out data tables
         grp = self.init_device_group(hdf5_file)
         grp.create_dataset('dds_data', compression=config.compression, data=out_table)
         self.set_property('frequency_scale_factor', dds.frequency.scale_factor, location='device_properties')
         self.set_property('amplitude_scale_factor', dds.amplitude.scale_factor, location='device_properties')
         self.set_property('phase_scale_factor', dds.phase.scale_factor, location='device_properties')
+
+class _AD9959EvalDDSIntermediateDevice(IntermediateDevice):
+    description = "AD9959EvalDDS Internal Intermediate Device"
+
+    allowed_children = [Trigger]
