@@ -6,7 +6,9 @@ and is licensed under the 3-clause BSD License.
 See the license.txt file for the full license.
 '''
 
-from labscript import AnalogQuantity, IntermediateDevice, set_passed_properties, LabscriptError
+from labscript import DDS, StaticDDS, IntermediateDevice, set_passed_properties, LabscriptError, config
+from labscript_utils.unitconversions import NovaTechDDS9mFreqConversion, NovaTechDDS9mAmpConversion
+
 
 import numpy as np
 import sys
@@ -128,14 +130,14 @@ class AD9959EvalDDS(IntermediateDevice):
 
         out_table = np.zeros(len(times), dtype=dtypes)
 
-        for i, dds in enumerate(DDSs):
+        for i, dds in DDSs.items():
             out_table['freq%d' % i][:] = dds.frequency.raw_output
             out_table['amp%d' % i][:] = dds.amplitude.raw_output
             out_table['phase%d' % i][:] = dds.phase.raw_output
 
         # write out data tables
         grp = self.init_device_group(hdf5_file)
-        grp.create_dataset('dds_data', compression=config.compression, data=out_table) 
+        grp.create_dataset('dds_data', compression=config.compression, data=out_table)
         self.set_property('frequency_scale_factor', dds.frequency.scale_factor, location='device_properties')
         self.set_property('amplitude_scale_factor', dds.amplitude.scale_factor, location='device_properties')
         self.set_property('phase_scale_factor', dds.phase.scale_factor, location='device_properties')

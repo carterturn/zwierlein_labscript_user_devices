@@ -43,7 +43,7 @@ class AD9959EvalDDSTab(DeviceTab):
     def initialise_workers(self):
         self.create_worker(
             "main_worker",
-            "user_devices.AD9959EvalDDS.blacs_workers.AD9959EvalDDSWorker",
+            "user_devices.AD9959EvalDDS.blacs_workers.AD9959DDSSweeperWorker",
             {
                 'com_port': self.com_port,
             },

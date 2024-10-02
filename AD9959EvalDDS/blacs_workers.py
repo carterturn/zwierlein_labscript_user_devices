@@ -19,13 +19,23 @@ class AD9959DDSSweeperInterface(object):
         version = self.get_version()
         print(f'Connected to version: {version}')
 
-        current_status = self.status()
+        current_status = self.get_status()
         print(f'Current status is {current_status}')
 
+        self.conn.write(b'reset\n')
+        self.assert_OK()
         self.conn.write(b'setclock 0 125000000\n')
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
+        self.conn.write(b'mode 0 0\n')
+        self.assert_OK()
         self.conn.write(b'setmult 4\n')
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
+        self.conn.write(b'debug off\n')
+        self.assert_OK()
+
+    def assert_OK(self):
+        resp = self.conn.readline().decode().strip()
+        assert resp == "ok", 'Exepcted "ok", received "%s"' % resp
 
     def get_version(self):
         '''Sends 'version' command, which retrieves the Pico firmware version.
@@ -39,12 +49,12 @@ class AD9959DDSSweeperInterface(object):
     def abort(self):
         '''Stops buffered execution immediately.'''
         self.conn.write(b'abort\n')
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
 
     def start(self):
         '''Starts buffered execution.'''
         self.conn.write(b'start\n')
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
     
     def get_status(self):
         '''Reads the status of the AD9959 DDS Sweeper
@@ -76,22 +86,22 @@ class AD9959DDSSweeperInterface(object):
     def set_output(self, channel, frequency, amplitude, phase):
         '''Set frequency, amplitude, and phase of a channel.'''
         self.conn.write(b'setfreq %d %f\n' % (channel, frequency))
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
         self.conn.write(b'setamp %d %f\n' % (channel, amplitude))
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
         self.conn.write(b'setphase %d %f\n' % (channel, phase))
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
 
     def set_channels(self, channels):
         '''Set number of channels to use in buffered sequence.'''
-        self.conn.write(b'setchannels %d %f\n' % channels)
-        assert self.conn.readline().decode() == "ok"
+        self.conn.write(b'setchannels %d\n' % channels)
+        self.assert_OK()
 
     def set(self, channel, addr, frequency, amplitude, phase):
         '''Set frequency, phase, and amplitude of a channel
         for address addr in buffered sequence.'''
         self.conn.write(b'set %d %d %f %f %f\n' % (channel, addr, frequency, amplitude, phase))
-        assert self.conn.readline().decode() == "ok"
+        self.assert_OK()
 
     def set_batch(self, channel, table):
         '''Set frequency, phase, and amplitude of a channel
@@ -102,7 +112,7 @@ class AD9959DDSSweeperInterface(object):
         for i, row in enumerate(table):
             self.conn.write(b'set %d %d %f %f %f\n' % (channel, i, row[k_f], row[k_a], row[k_p]))
         for row in table:
-	        assert self.conn.readline().decode() == "ok"
+	        self.assert_OK()
 
     def close(self):
         self.conn.close()
@@ -125,6 +135,7 @@ class AD9959DDSSweeperWorker(Worker):
             group = hdf5_file['devices'][device_name]
             dds_data = group['dds_data']
             channels = set([int(n[4:]) for n in dds_data.dtype.names if n.startswith('freq')])
+            self.intf.set_channels(max(channels) + 1)
             for channel in channels:
                 self.intf.set_batch(channel, dds_data['freq%d' % channel,
                                                       'amp%d' % channel,
