@@ -67,7 +67,7 @@ class AD9959EvalDDS(IntermediateDevice):
         scale_factor = self.clk_scale # Need to multiply by clk scale factor
 
         # It's faster to add 0.5 then typecast than to round to integers first:
-        data = np.array((scale_factor*data)+0.5,dtype=np.uint32)
+        data = np.array((scale_factor*data)+0.5,dtype='<u4')
         return data, scale_factor
         
     def quantise_phase(self, data, device):
@@ -79,7 +79,7 @@ class AD9959EvalDDS(IntermediateDevice):
         data %= 360
         # It's faster to add 0.5 then typecast than to round to integers first:
         scale_factor = 16384/360.0
-        data = np.array((scale_factor*data)+0.5,dtype=np.uint16)
+        data = np.array((scale_factor*data)+0.5,dtype='<u2')
         return data, scale_factor
         
     def quantise_amp(self, data, device):
@@ -93,7 +93,7 @@ class AD9959EvalDDS(IntermediateDevice):
                               'can only have amplitudes between 0 and 1 (Volts peak to peak approx), ' + 
                               'the limit imposed by %s.' % self.name)
         # It's faster to add 0.5 then typecast than to round to integers first:
-        data = np.array((1023*data)+0.5,dtype=np.uint16)
+        data = np.array((1023*data)+0.5,dtype='<u2')
         scale_factor = 1023
         return data, scale_factor
 
@@ -128,7 +128,7 @@ class AD9959EvalDDS(IntermediateDevice):
                                      'Format must be \'channel n\' with n from 0 to 4.')
 
         dtypes = {'names':['%s%d' % (k, i) for i in DDSs for k in ['freq', 'amp', 'phase'] ],
-                  'formats':[f for i in DDSs for f in (np.uint32, np.uint16, np.uint16)]}
+                  'formats':[f for i in DDSs for f in ('<u4', '<u2', '<u2')]}
 
         clockline = self.parent_clock_line
         pseudoclock = clockline.parent_device
