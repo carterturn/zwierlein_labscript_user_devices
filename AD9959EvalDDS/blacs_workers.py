@@ -112,7 +112,7 @@ class AD9959DDSSweeperInterface(object):
             resp += self._read_full_buffer()
             raise LabscriptError(f'setb command failed, got response {repr(resp)}')
         self.conn.write(table.tobytes())
-	    self.assert_OK()
+        self.assert_OK()
 
     def stop(self, count):
         self.conn.write(b'set 4 %d\n' % count)
