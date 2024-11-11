@@ -99,8 +99,8 @@ class AD9959DDSSweeperInterface(object):
 
     def set(self, channel, addr, frequency, amplitude, phase):
         '''Set frequency, phase, and amplitude of a channel
-        for address addr in buffered sequence.'''
-        self.conn.write(b'set %d %d %f %f %f\n' % (channel, addr, frequency, amplitude, phase))
+        for address addr in buffered sequence from integer values.'''
+        self.conn.write(b'seti %d %d %f %f %f\n' % (channel, addr, frequency, amplitude, phase))
         self.assert_OK()
 
     def set_batch(self, channel, table):
@@ -110,7 +110,7 @@ class AD9959DDSSweeperInterface(object):
         k_a = 'amp%d' % channel
         k_p = 'phase%d' % channel
         for i, row in enumerate(table):
-            self.conn.write(b'set %d %d %f %f %f\n' % (channel, i, row[k_f], row[k_a], row[k_p]))
+            self.conn.write(b'seti %d %d %u %u %u\n' % (channel, i, row[k_f], row[k_a], row[k_p]))
         for row in table:
 	        self.assert_OK()
 

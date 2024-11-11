@@ -82,7 +82,7 @@ class AD9959EvalDDS(IntermediateDevice):
         data = np.array((scale_factor*data)+0.5,dtype=np.uint16)
         return data, scale_factor
         
-    def quantise_amp(self,data,device):
+    def quantise_amp(self, data, device):
         """Ensures amplitude is within bounds and scales to instrument units
         (between 0 and 1023) before typecasting to uint16"""
         if not isinstance(data, np.ndarray):
