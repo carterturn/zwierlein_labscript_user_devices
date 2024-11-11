@@ -106,7 +106,7 @@ class AD9959DDSSweeperInterface(object):
     def set_batch(self, table):
         '''Set frequency, phase, and amplitude of a channel
         for address addr in buffered sequence.'''
-        self.conn.write('setb 0 %d\n' % len(table))
+        self.conn.write(b'setb 0 %d\n' % len(table))
         resp = self.conn.readline().decode()
         if resp != 'ready\n':
             resp += self._read_full_buffer()
@@ -145,8 +145,8 @@ class AD9959DDSSweeperWorker(Worker):
 
             channels = set([int(n[4:]) for n in dds_data.dtype.names if n.startswith('freq')])
             self.intf.set_channels(max(channels) + 1)
-            self.intf.set_batch(channel, dds_data)
-            self.intf.stop(len(dds_data))
+            self.intf.set_batch(dds_data[()])
+            self.intf.stop(len(dds_data[()]))
 
         self.intf.start()
 
