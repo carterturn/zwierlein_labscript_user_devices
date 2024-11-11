@@ -103,16 +103,16 @@ class AD9959DDSSweeperInterface(object):
         self.conn.write(b'seti %d %d %f %f %f\n' % (channel, addr, frequency, amplitude, phase))
         self.assert_OK()
 
-    def set_batch(self, channel, table):
+    def set_batch(self, table):
         '''Set frequency, phase, and amplitude of a channel
         for address addr in buffered sequence.'''
-        k_f = 'freq%d' % channel
-        k_a = 'amp%d' % channel
-        k_p = 'phase%d' % channel
-        for i, row in enumerate(table):
-            self.conn.write(b'seti %d %d %u %u %u\n' % (channel, i, row[k_f], row[k_a], row[k_p]))
-        for row in table:
-	        self.assert_OK()
+        self.conn.write('setb 0 %d\n' % len(table))
+        resp = self.conn.readline().decode()
+        if resp != 'ready\n':
+            resp += self._read_full_buffer()
+            raise LabscriptError(f'setb command failed, got response {repr(resp)}')
+        self.conn.write(table.tobytes())
+	    self.assert_OK()
 
     def stop(self, count):
         self.conn.write(b'set 4 %d\n' % count)
@@ -145,10 +145,7 @@ class AD9959DDSSweeperWorker(Worker):
 
             channels = set([int(n[4:]) for n in dds_data.dtype.names if n.startswith('freq')])
             self.intf.set_channels(max(channels) + 1)
-            for channel in channels:
-                self.intf.set_batch(channel, dds_data['freq%d' % channel,
-                                                      'amp%d' % channel,
-                                                      'phase%d' % channel])
+            self.intf.set_batch(channel, dds_data)
             self.intf.stop(len(dds_data))
 
         self.intf.start()

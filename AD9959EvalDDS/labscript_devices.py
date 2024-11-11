@@ -127,12 +127,8 @@ class AD9959EvalDDS(IntermediateDevice):
                 raise LabscriptError('%s %s has invalid connection string: \'%s\'. ' % (dds.description,dds.name,str(dds.connection)) + 
                                      'Format must be \'channel n\' with n from 0 to 4.')
 
-        dtypes = {'names':['freq%d' % i for i in DDSs] +
-                  ['amp%d' % i for i in DDSs] +
-                  ['phase%d' % i for i in DDSs],
-                  'formats':[np.uint32 for i in DDSs] +
-                  [np.uint16 for i in DDSs] + 
-                  [np.uint16 for i in DDSs]}  
+        dtypes = {'names':['%s%d' % (k, i) for k in ['freq', 'amp', 'phase'] for i in DDSs],
+                  'formats':[f for f in (np.uint32, np.uint16, np.uint16) for i in DDSs]}
 
         clockline = self.parent_clock_line
         pseudoclock = clockline.parent_device
