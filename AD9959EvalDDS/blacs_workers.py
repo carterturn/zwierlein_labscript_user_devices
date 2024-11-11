@@ -108,8 +108,8 @@ class AD9959DDSSweeperInterface(object):
         for address addr in buffered sequence.'''
         self.conn.write(b'setb 0 %d\n' % len(table))
         resp = self.conn.readline().decode()
-        if resp != 'ready\n':
-            resp += self._read_full_buffer()
+        if not resp.startswith('ready'):
+            resp += ''.join([r.decode() for r in self.conn.readlines()])
             raise LabscriptError(f'setb command failed, got response {repr(resp)}')
         self.conn.write(table.tobytes())
         self.assert_OK()
