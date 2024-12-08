@@ -7,6 +7,7 @@ See the license.txt file for the full license.
 '''
 
 from labscript import AnalogQuantity, TriggerableDevice, set_passed_properties, LabscriptError
+from labscript_utils.unitconversions import NovaTechDDS9mFreqConversion
 
 import numpy as np
 import sys
@@ -33,7 +34,8 @@ class AD9914Pico(TriggerableDevice):
         #     (t, start freq, stop freq, start amp, stop amp, sweep, sweep time, triger)
         self.commands = []
 
-        self._freq = AnalogQuantity(self.name + '_freq', self, 'freq')
+        self._freq = AnalogQuantity(self.name + '_freq', self, 'freq',
+                                    unit_conversion_class=NovaTechDDS9mFreqConversion)
         self._amp = AnalogQuantity(self.name + '_amp', self, 'amp')
 
     def generate_code(self, hdf5_file):

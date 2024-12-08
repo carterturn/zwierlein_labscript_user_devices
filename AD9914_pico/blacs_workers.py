@@ -116,7 +116,7 @@ class AD9914PicoWorker(Worker):
         self.intf.abort()
         self.intf.clear()
 
-        self.intf.add(values['output']['freq'], values['output']['amp'], trigger=False)
+        self.intf.add(values['freq'], values['amp'], trigger=False)
 
         self.intf.run()
 
