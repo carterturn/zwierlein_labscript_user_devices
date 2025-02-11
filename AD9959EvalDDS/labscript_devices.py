@@ -13,6 +13,20 @@ from labscript_utils.unitconversions import NovaTechDDS9mFreqConversion, NovaTec
 import numpy as np
 import sys
 
+class DDS_TTL(object):
+    def __init__(self, dds_device, amplitude, frequency):
+        self.dds_device = dds_device
+        self.amplitude = amplitude
+        self.frequency = frequency
+
+    def enable(self, t):
+        self.dds_device.amplitude.constant(t, self.amplitude)
+        self.dds_device.frequency.constant(t, self.frequency)
+
+    def disable(self, t):
+        self.dds_device.amplitude.constant(t, 0.0)
+        self.dds_device.frequency.constant(t, 0.0)
+
 class AD9959EvalDDS(IntermediateDevice):
     allowed_children = [DDS, StaticDDS]
 
