@@ -102,6 +102,7 @@ class PixelflyCameraWorker(Worker):
         self.cam.configuration['trigger'] = 'software trigger'
         self.cam.record(number_of_images=1, mode='sequence')
         image, meta = self.cam.image()
+        self.cam.stop()
         self._send_image_to_parent(image)
 
     def continuous_loop(self, dt):
@@ -184,11 +185,12 @@ class PixelflyCameraWorker(Worker):
             print('No camera exposures in this shot.\n')
             return True
 
+        cam_images, cam_metadatas = self.cam.images()
+
         print("Stopping acquisition.")
         if self.cam.is_recording:
             self.cam.stop()
 
-        cam_images, cam_metadatas = self.cam.images()
         print(f"Saving {len(cam_images)}/{len(self.exposures)} images.")
 
         with h5py.File(self.h5_filepath, 'r+') as f:
@@ -201,7 +203,7 @@ class PixelflyCameraWorker(Worker):
             image_group.attrs['camera'] = self.device_name
 
             # Whether we failed to get all the expected exposures:
-            image_group.attrs['failed_shot'] = len(self.images) != len(self.exposures)
+            image_group.attrs['failed_shot'] = len(cam_images) != len(self.exposures)
 
             # key the images by name and frametype. Allow for the case of there being
             # multiple images with the same name and frametype. In this case we will
