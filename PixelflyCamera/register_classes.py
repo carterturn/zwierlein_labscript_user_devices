@@ -10,6 +10,6 @@ from labscript_devices import register_classes
 
 register_classes(
     'PixelflyCamera',
-    BLACS_tab='user_devices.AlliedVisionCamera.blacs_tabs.PixelflyCameraTab',
+    BLACS_tab='user_devices.PixelflyCamera.blacs_tabs.PixelflyCameraTab',
     runviewer_parser=None,
 )

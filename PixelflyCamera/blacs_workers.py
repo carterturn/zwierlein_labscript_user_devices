@@ -37,7 +37,7 @@ class PixelflyCameraWorker(Worker):
             global datetime
             import datetime
 
-        self.cam = pco.Camera(self.interface, self.serial)
+        self.cam = pco.Camera(interface=self.interface, serial=self.serial_number)
 
         self.cam.default_configuration()
 
@@ -101,22 +101,24 @@ class PixelflyCameraWorker(Worker):
         self.set_attributes_smart(self.manual_mode_camera_attributes)
         self.cam.configuration['trigger'] = 'software trigger'
         self.cam.record(number_of_images=1, mode='sequence')
-        self._send_image_to_parent(self.cam.image())
+        image, meta = self.cam.image()
+        self._send_image_to_parent(image)
 
     def continuous_loop(self, dt):
         '''Acquire continuously in a loop, with minimum repetition interval dt'''
         while True:
             if dt is not None:
                 t = perf_counter()
-            image = self.cam.image()
-            self._send_image_to_parent(image)
-            if dt is None:
-                timeout = 0
-            else:
-                timeout = t + dt - perf_counter()
-            if self.continuous_stop.wait(timeout):
-                self.continuous_stop.clear()
-                break
+            if self.cam.recorded_image_count > 0:
+                image, meta = self.cam.image()
+                self._send_image_to_parent(image)
+                if dt is None:
+                    timeout = 0
+                else:
+                    timeout = t + dt - perf_counter()
+                if self.continuous_stop.wait(timeout):
+                    self.continuous_stop.clear()
+                    break
 
     def start_continuous(self, dt):
         '''Begin continuous acquisition in separate thread'''
@@ -186,7 +188,7 @@ class PixelflyCameraWorker(Worker):
         if self.cam.is_recording:
             self.cam.stop()
 
-        cam_images = self.cam.images()
+        cam_images, cam_metadatas = self.cam.images()
         print(f"Saving {len(cam_images)}/{len(self.exposures)} images.")
 
         with h5py.File(self.h5_filepath, 'r+') as f:
