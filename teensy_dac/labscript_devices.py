@@ -24,7 +24,7 @@ class TeensyDAC(IntermediateDevice):
     )
 
     def __init__(self, name, parent_device, serial_number, dac_cmd_scale=2**16/(4.096*2.5), **kwargs):
-        IntermediateDevice.__init__(self, name, parent_device, *kwargs)
+        IntermediateDevice.__init__(self, name, parent_device, **kwargs)
         self.BLACS_connection = 'TeensyDAC: {}'.format(name)
         self.dac_cmd_scale = dac_cmd_scale
 
